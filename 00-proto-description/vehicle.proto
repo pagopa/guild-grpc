@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package vehicle;
+
+service Vehicle {
+    rpc SendLocation (stream VehicleLocationRequest) returns (AckResponse) {}
+    rpc BookConfirmation (BookConfirmationRequest) returns (AckResponse) {}
+}
+
+message VehicleLocationRequest {
+    string vehicle_id = 1;
+    Location location = 2;
+}
+
+message BookConfirmationRequest {
+    string user_id = 1;
+    Location location = 2;
+}
+
+message AckResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message Location {
+    double latitude = 1;
+    double longitude = 2; ## instead double we could use google wrapper to manage null value
+}
