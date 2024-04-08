@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package vehicle;
+
+service Vehicle {
+    rpc Book (BookingRequest) returns (BookingResponse) {}
+}
+
+message BookingRequest {
+    string vehicle_id = 1;
+    Location location = 2;
+    string user_id = 3;
+}
+
+message BookingResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message Location {
+    double latitude = 1;
+    double longitude = 2;
+}
