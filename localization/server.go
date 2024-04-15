@@ -14,11 +14,12 @@ var (
 	port = flag.Int("port", 50051, "The server port")
 )
 
-// server is used to implement helloworld.GreeterServer.
+// server is used to implement localization.LocalizationServer.
 type server struct {
 	pb.UnimplementedLocalizationServer
 }
 
+// SendLocation implements localization.LocalizationServer
 func (s *server) SendLocation(stream pb.Localization_SendLocationServer) error {
 	for {
 		req, err := stream.Recv()
