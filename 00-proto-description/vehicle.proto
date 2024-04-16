@@ -1,22 +1,16 @@
 syntax = "proto3";
 
-package vehicle;
+package it.pagopa.guild.grpc.booking;
+import "common.proto";
 
-service Vehicle {
+// vehicle service definition
+service VehicleService {
+    // send a book confirmation to a vehicle
     rpc BookConfirmation (BookConfirmationRequest) returns (AckResponse) {}
 }
 
+// The request message containing the user's id and location (lat/lon)
 message BookConfirmationRequest {
     string user_id = 1;
     Location location = 2;
-}
-
-message AckResponse {
-    bool success = 1;
-    string message = 2;
-}
-
-message Location {
-    double latitude = 1;
-    double longitude = 2; // instead double we could use google wrapper to manage null value
 }
