@@ -1,23 +1,17 @@
 syntax = "proto3";
 
-package booking;
+package it.pagopa.guild.grpc.booking;
+import "common.proto";
 
-service Booking {
-    rpc Book (BookingRequest) returns (BookingResponse) {}
+// booking service definition
+service BookingService {
+    // book a vehicle
+    rpc Book (BookingRequest) returns (AckResponse) {}
 }
 
+// The request message containing the user's id, vehicle's id and location (lat/lon)
 message BookingRequest {
     string vehicle_id = 1;
     Location location = 2;
     string user_id = 3;
-}
-
-message BookingResponse {
-    bool success = 1;
-    string message = 2;
-}
-
-message Location {
-    double latitude = 1;
-    double longitude = 2;
 }
