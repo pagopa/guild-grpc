@@ -1,15 +1,27 @@
 syntax = "proto3";
 
-package vehicle;
+package localization;
+option go_package = "protofiles/localization";
 
-service Vehicle {
+service Localization {
+    rpc SendLocation (stream VehicleLocationRequest) returns (AckResponse) {}
     rpc GetNearVehicles (UserLocationRequest) returns (stream NearVehicleResponse) {}
+}
+
+message VehicleLocationRequest {
+    string vehicle_id = 1;
+    Location location = 2;
+}
+
+message AckResponse {
+    bool success = 1;
+    string message = 2;
 }
 
 message UserLocationRequest {
     string user_id = 1;
     Location location = 2;
-    double vehicle_level = 3; ## filter by car type
+    double vehicle_level = 3; // filter by car type
 }
 
 message NearVehicleResponse {
