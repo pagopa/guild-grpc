@@ -1,0 +1,26 @@
+version: '3'
+services:
+
+  guild_grpc_mongo:
+    image: mongo:${MONGO_VERSION}
+    container_name: mongo-db-container
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_GUILD_DB}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PW}
+      MONGO_GUILD_USER: ${MONGO_GUILD_USER}
+      MONGO_GUILD_PW: ${MONGO_GUILD_PW}
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+      - ${PWD}/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks: 
+      - guild_grpc_network
+
+volumes:
+  mongodb_data_container: {}
+  
+networks:
+  guild_grpc_network:
+    driver: bridge
