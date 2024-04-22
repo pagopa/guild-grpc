@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package booking;
+import "common/common.proto";
+
+// vehicle service definition
+service VehicleService {
+    // send a book confirmation to a vehicle
+    rpc BookConfirmation (BookConfirmationRequest) returns (common.AckResponse) {}
+}
+
+// The request message containing the user's id and location (lat/lon)
+message BookConfirmationRequest {
+    string user_id = 1;
+    common.Location location = 2;
+}
