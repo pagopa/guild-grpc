@@ -9,8 +9,9 @@ service VehicleService {
     rpc BookConfirmation (BookConfirmationRequest) returns (AckResponse) {}
 }
 
-// The request message containing the user's id and location (lat/lon)
+// The request message containing the user's id, the vehicle's id and the location (lat/lon)
 message BookConfirmationRequest {
     string user_id = 1;
-    Location location = 2;
+    string vehicle_id = 2;
+    Location location = 3;
 }
