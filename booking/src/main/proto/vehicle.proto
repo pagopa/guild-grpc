@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package it.pagopa.guild.grpc.booking;
+import "common.proto";
+
+// vehicle service definition
+service VehicleService {
+    // send a book confirmation to a vehicle
+    rpc BookConfirmation (BookConfirmationRequest) returns (AckResponse) {}
+}
+
+// The request message containing the user's id, the vehicle's id and the location (lat/lon)
+message BookConfirmationRequest {
+    string user_id = 1;
+    string vehicle_id = 2;
+    Location location = 3;
+}
