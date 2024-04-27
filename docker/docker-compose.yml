@@ -3,7 +3,7 @@ services:
 
   guild_grpc_mongo:
     image: mongo:${MONGO_VERSION}
-    container_name: mongo-db-container
+    container_name: mongo-db
     environment:
       MONGO_INITDB_DATABASE: ${MONGO_GUILD_DB}
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
@@ -15,6 +15,22 @@ services:
     volumes:
       - mongodb_data_container:/data/db
       - ${PWD}/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks: 
+      - guild_grpc_network
+
+  guild_grpc_booking_service:
+    restart: on-failure
+    build:
+      context: ../booking
+      dockerfile: Dockerfile
+    container_name: booking-service
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    depends_on:
+      - guild_grpc_mongo
+    environment:
+      - SPRING_DATA_MONGODB_host=mongo-db
     networks: 
       - guild_grpc_network
 
