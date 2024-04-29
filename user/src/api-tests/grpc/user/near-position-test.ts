@@ -1,13 +1,14 @@
-import { check } from "k6";
+import { check, fail } from "k6";
 import { getConfigOrThrow } from "../utils/config";
 import grpc from 'k6/net/grpc';
-
+import { uuid } from 'uuidv4';
 
 /**
  * Test constants
  */
 const config = getConfigOrThrow();
-const client = new grpc.Client();
+const localizationClient = new grpc.Client();
+const bookingClient = new grpc.Client();
 
 /**
  * Configure test options
@@ -31,44 +32,76 @@ export let options = {
   thresholds: {
     grpc_req_duration: ["p(99)<1500"], // 99% of requests must complete below 1.5s
     checks: ['rate>0.9'], // 90% of the request must be completed
-    "grpc_req_duration{name:get-vehicle-position-test}": ["p(95)<1500"],
+    "grpc_req_duration{name:get-vehicle-position-test-localization}": ["p(95)<1000"],
+    "grpc_req_duration{name:get-vehicle-position-test-booking}": ["p(95)<1000"],
   },
 };
 
 /**
  * Configure gRpc client
  */
-client.load(['definitions'], 'localization.proto');
+localizationClient.load(['definitions'], 'localization.proto', 'booking.proto', 'common.proto');
+bookingClient.load(['definitions'], 'booking.proto', 'common.proto');
 
 
 let initialized = false;
 
-function initializeClient() {
+function initializeClients() {
+  try{
   if (!initialized) {
-    const grpcServerHost = config.GRPC_SERVER_HOST;
-    client.connect(grpcServerHost, {
+    const bookingGrpcHost = config.BOOKING_GRPC_SERVER_HOST;
+    const localizationGrpcHost = config.LOCALIZATION_GRPC_SERVER_HOST;
+    console.log(`Connecting localzation client to endpoint: ${localizationGrpcHost}`);
+    localizationClient.connect(localizationGrpcHost, {
       plaintext: true //here set to true to allow unsecure communication for test purpose
     });
+    console.log(`Localization client connected successfully: ${localizationClient}`);
+    console.log(`Connecting booking client to endpoint: ${bookingGrpcHost}`);
+    bookingClient.connect(bookingGrpcHost, {
+      plaintext: true //here set to true to allow unsecure communication for test purpose
+    });
+    console.log(`Booking client connected successfully: ${bookingClient}`);
     initialized = true;
   }
+} catch(error){
+  console.log(`Error initializing clients. Error: ${error}`);
+  fail(`Cannot perform test, error initializing clients`);
+}
 }
 
 export default function () {
-  initializeClient();
-  const requestUrl = "/localization.Localization/GetNearVehicles";
-  const request = {
+  initializeClients();
+  const localizationUrl = "/localization.Localization/GetNearVehicles";
+  const localizationRequest = {
     user_id: "123",
     location: {
-      latitude: 0,
-      longitude: 0
+      latitude: -37412929.48437618,
+      longitude: -74393901.02844512
     },
     vehicle_level: 1
   };
-  const response = client.invoke(
-    requestUrl,
-    request,
-    { tags: { name: "get-vehicle-position-test" } }
+  const localizationResponse = localizationClient.invoke(
+    localizationUrl,
+    localizationRequest,
+    { tags: { name: "get-vehicle-position-test-localization" } }
   );
-  check(response, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
-    { name: "get-vehicle-position-test" });
+  check(localizationResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
+    { name: "get-vehicle-position-test-localization" });
+  const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
+  const bookingRequest = {
+    location: {
+      latitude: -37412929.48437618,
+      longitude: -74393901.02844512
+    },
+    user_id: "1",
+    vehicle_id: "60c9e1152a61292d843b7413"
+  };
+  const bookingResponse = bookingClient.invoke(
+    bookingUrl,
+    bookingRequest,
+    { tags: { name: "get-vehicle-position-test-booking" } }
+  );
+  check(bookingResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
+    { name: "get-vehicle-position-test-localization" });
 }
+
