@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package it.pagopa.guild.grpc.booking;
+
+// The response message containing the operation ack
+message AckResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Message containing location data: latitude and longitude
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+}
