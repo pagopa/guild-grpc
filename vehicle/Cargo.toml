@@ -4,22 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 
-# Bin to run the Booking server (execute it with `cargo run --bin booking-server`)
-[[bin]]
-name = "booking-server"
-path = "src/booking_server.rs"
-
-# Bin to run the Localization client (execute it with `cargo run --bin localization-client`)
-[[bin]]
-name = "localization-client"
-path = "src/localization_client.rs"
-
-# Bin to run the Localization server for testing purpose (execute it with `cargo run --bin localization-server`)
-[[bin]]
-name = "localization-server"
-path = "src/localization_server.rs"
-
-
 [dependencies]
 # Rust implementation of gRPC framework
 tonic = "0.11.0"
@@ -32,10 +16,10 @@ tokio = { version = "1.18", features = ["macros", "rt-multi-thread"] }
 
 futures = "0.3.30"
 
-
 # Random number generator
 rand = "0.8"
 
 
 [build-dependencies]
 tonic-build = "0.11.0"
+

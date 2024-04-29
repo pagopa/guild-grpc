@@ -17,10 +17,12 @@ pub mod common {
 
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn start_ping() -> Result<(), Box<dyn std::error::Error>> {
 
+    println!("[Localization Sender] Starting connection to Localization service...");
     let mut client = LocalizationServiceClient::connect("http://[::1]:50052").await?;
-
+    println!("[Localization Sender] Connected to Localization service!");
+    
     let mut rng = rand::thread_rng();
     let mut interval = time::interval(Duration::from_millis(2000));
 
@@ -34,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             vehicle_id: String::from("car_1")
         };
 
-        println!("Sending vehicle location to Localization Server...");
+        println!("[Localization Sender] Sending vehicle location to Localization Server...");
         let request_stream = futures::stream::once(async { location });
         let response = client.send_location(Request::new(request_stream))
             .await?
@@ -43,3 +45,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
       
 }
+

@@ -1,8 +1,10 @@
 use tonic::{transport::Server, Request, Response, Status};
 
-use booking::vehicle_service_server::{VehicleService, VehicleServiceServer};
+use booking::vehicle_service_server::VehicleService;
 use booking::BookConfirmationRequest;
 use common::AckResponse;
+
+use crate::service::booking::booking::vehicle_service_server::VehicleServiceServer;
 
 pub mod booking {
     tonic::include_proto!("booking");
@@ -21,22 +23,22 @@ impl VehicleService for BookingServerImpl {
     async fn book_confirmation(&self, request: Request<BookConfirmationRequest>) -> Result<Response<AckResponse>, Status> {
 
         println!("Received request for booking confirmation: {:?}", request);
-        let response = common::AckResponse{
+        let response = AckResponse{
             message: String::from("OK"),
             success: true
         };
         Ok(Response::new(response))
     }
-} 
+}
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
-    println!("Starting execution of gRPC stub for Booking server responder...");
+pub async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
+    
+    println!("[Booking Receiver] Starting execution of Vehicle booking microservice.");
     Server::builder()
         .add_service(VehicleServiceServer::new(BookingServerImpl::default()))
-        .serve("[::1]:50051".parse()?)
+        .serve("0.0.0.0:50051".parse().unwrap())
         .await?;
-    println!("Execution of gRPC stub for Booking server responder ended.");
+    println!("[Booking Receiver] Execution of Vehicle booking microservice ended.");
     Ok(())
 }
