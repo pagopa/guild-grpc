@@ -7,13 +7,19 @@ import (
 	pb "localization/protofiles/localization"
 	"log"
 	"net"
+	"net/http"
 	"time"
 
 	"google.golang.org/grpc"
+
+	"github.com/gin-gonic/gin"
 )
 
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++gRPC API START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 var (
-	port = flag.Int("port", 50051, "The server port")
+	gRPC_port = flag.Int("grpc_port", 50051, "The gRPC server port")
+	gin_port  = flag.Int("gin_port", 8080, "The GIN server port")
 )
 
 // server is used to implement localization.LocalizationServer.
@@ -116,20 +122,87 @@ func (s *server) SendLocation(stream pb.Localization_SendLocationServer) error {
 	}
 }
 
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++gRPC API END+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++RESTful API START+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// vehicle_location represents data about a record vehicle_location.
+type vehicle_location struct {
+	ID       string   `json:"id"`
+	Location location `json:"location"`
+	Fuel     float64  `json:"fuel"`
+}
+
+// location represents data about a record location.
+type location struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+// vehicles slice to seed record album data.
+var vehicles = []vehicle_location{
+	{ID: "1", Location: location{Latitude: 45.97, Longitude: 12.33}, Fuel: 26.25},
+	{ID: "2", Location: location{Latitude: 45.98, Longitude: 12.34}, Fuel: 50.25},
+	{ID: "3", Location: location{Latitude: 45.99, Longitude: 12.35}, Fuel: 96.25},
+}
+
+// getNearVehicles responds with the list of all vehicles as JSON.
+func getNearVehicles(c *gin.Context) {
+	latitude := c.DefaultQuery("latitude", "45.97")
+	longitude := c.DefaultQuery("longitude", "12.22")
+	log.Printf("Get near vehicles from location (%v,%v)", latitude, longitude)
+	c.IndentedJSON(http.StatusOK, vehicles)
+}
+
+// postVehicle adds an album from JSON received in the request body.
+func postVehicle(c *gin.Context) {
+	var vehicle_location vehicle_location
+
+	// Call BindJSON to bind the received JSON to vehicle_location.
+	if err := c.BindJSON(&vehicle_location); err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	// Add the new vehicle_location to the slice.
+	vehicles = append(vehicles, vehicle_location)
+	c.IndentedJSON(http.StatusCreated, vehicle_location)
+}
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++RESTful API END+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 func main() {
 	fmt.Println("gRPC guild localization µ-service has been launched!")
 
+	// Start gRPC server in a Goroutine
+	go startGINServer()
+
+	// Start GIN server in the main Goroutine
+	startGRPCServer()
+}
+
+func startGRPCServer() {
 	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *gRPC_port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
-	pb.RegisterLocalizationServer(s, &server{})
+	grpcServer := grpc.NewServer()
+	pb.RegisterLocalizationServer(grpcServer, &server{})
 
-	log.Printf("server listening at %v", lis.Addr())
-	if err := s.Serve(lis); err != nil {
+	log.Printf("gRPC server listening at %v", lis.Addr())
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+}
+
+func startGINServer() {
+	router := gin.Default()
+
+	router.GET("/vehicles", getNearVehicles)
+	router.POST("/vehicles", postVehicle)
+
+	router.Run(fmt.Sprintf("localhost:%d", *gin_port))
+	log.Printf("GIN Server listening at %d", *gin_port)
 }
