@@ -32,13 +32,14 @@ impl VehicleService for BookingServerImpl {
 }
 
 #[tokio::main]
-pub async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn start_server() { //-> Result<(), Box<dyn std::error::Error>> {
     
     println!("[Booking Receiver] Starting execution of Vehicle booking microservice.");
     Server::builder()
         .add_service(VehicleServiceServer::new(BookingServerImpl::default()))
         .serve("0.0.0.0:50051".parse().unwrap())
-        .await?;
+        .await
+        .unwrap();
     println!("[Booking Receiver] Execution of Vehicle booking microservice ended.");
-    Ok(())
+    //Ok(())
 }

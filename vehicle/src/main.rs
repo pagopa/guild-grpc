@@ -15,7 +15,6 @@ async fn main() {
     let thread2 = thread::spawn(|| {
         let _ = start_ping();
     });
-
     thread1.join().unwrap();
     thread2.join().unwrap();
 }
