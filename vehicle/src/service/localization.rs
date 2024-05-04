@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{sync::{Arc, Mutex}, time::Duration};
 
 use tokio::time;
 use tonic::Request;
@@ -6,6 +6,8 @@ use rand::Rng;
 
 use localization::{VehicleLocationRequest, localization_service_client::LocalizationServiceClient};
 use common::Location;
+
+use crate::data::database::VehicleDatabase;
 
 
 pub mod localization {
@@ -17,7 +19,7 @@ pub mod common {
 
 
 #[tokio::main]
-pub async fn start_ping() { //-> Result<(), Box<dyn std::error::Error>> {
+pub async fn start_ping(database: Arc<Mutex<VehicleDatabase>>) { 
 
     println!("[Localization Sender] Starting connection to Localization service...");
     let mut client = LocalizationServiceClient::connect("http://[::1]:50052").await.unwrap();
