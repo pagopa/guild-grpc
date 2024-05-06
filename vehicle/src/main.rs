@@ -19,9 +19,6 @@ async fn main() {
 
     // initialize data base
     let database = Arc::new(Mutex::new(VehicleDatabase::new()));
-    let mut db = database.lock().unwrap();
-    db.init_fleet();
-    drop(db);
 
     // start thread: gRPC booking service
     let db_ref1 = Arc::clone(&database);

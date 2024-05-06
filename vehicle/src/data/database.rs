@@ -72,22 +72,20 @@ pub struct VehicleDatabase {
 impl VehicleDatabase {
 
     pub fn new() -> Self {
-        Self { vehicles: HashMap::new() }
-    }
-
-    pub fn init_fleet(&mut self) {
+        let mut self_instance = Self { vehicles: HashMap::new() };
         let car_fleet_size = env::var("CAR_FLEET_SIZE").unwrap_or(String::from("5")).parse::<i32>().unwrap();
         for idx in 1..car_fleet_size + 1 {
-            self.add_vehicle(format!("CAR{:0fill$}", idx, fill=8).as_str(), VehicleType::Car);
+            self_instance.add_vehicle(format!("CAR{:0fill$}", idx, fill=8).as_str(), VehicleType::Car);
         }
         let bicycle_fleet_size = env::var("BICYCLE_FLEET_SIZE").unwrap_or(String::from("3")).parse::<i32>().unwrap();
         for idx in 1..bicycle_fleet_size + 1 {
-            self.add_vehicle(format!("BIC{:0fill$}", idx, fill=8).as_str(), VehicleType::Bicycle);
+            self_instance.add_vehicle(format!("BIC{:0fill$}", idx, fill=8).as_str(), VehicleType::Bicycle);
         }
         let motorcycle_fleet_size = env::var("MOTORCYCLE_FLEET_SIZE").unwrap_or(String::from("2")).parse::<i32>().unwrap();
         for idx in 1..motorcycle_fleet_size + 1 {
-            self.add_vehicle(format!("MOT{:0fill$}", idx, fill=8).as_str(), VehicleType::Motorcycle);
+            self_instance.add_vehicle(format!("MOT{:0fill$}", idx, fill=8).as_str(), VehicleType::Motorcycle);
         }
+        self_instance
     }
 
     pub fn add_vehicle(&mut self, id: &str, vehicle_type: VehicleType) {
