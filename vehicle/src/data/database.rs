@@ -100,10 +100,10 @@ impl VehicleDatabase {
                     if vehicle.estimated_time_in_state > 0 {
                         vehicle.estimated_time_in_state -= 1;
                         vehicle.fuel -= env::var("FUEL_CONSUME_PER_TURN").unwrap_or(String::from("1.0")).parse::<f32>().unwrap() as f32;
-                        // updating location
+                        // updating movement
                         let movement = Direction::get_coordinate_movement(&vehicle.direction);
-                        vehicle.location.latitude += movement.0;
-                        vehicle.location.longitude += movement.1;
+                        vehicle.location.latitude += movement.0 * 0.001;
+                        vehicle.location.longitude += movement.1 * 0.001;
                     } else {
                         vehicle.state = VehicleState::Free;
                         vehicle.booked_user = None;
