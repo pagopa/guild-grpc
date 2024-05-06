@@ -1,4 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
+
+use rand::{distributions::{Distribution, Standard}, Rng};
 
 use crate::service::booking::common::Location;
 
@@ -11,6 +13,7 @@ pub struct Vehicle {
     pub state: VehicleState,
     pub fuel: f32,
     pub booked_user: Option<String>,
+    pub direction: Direction,
     pub estimated_time_in_state: i32
 }
 
@@ -26,6 +29,36 @@ pub enum VehicleState {
     ReturningToBase,
 }
 
+pub enum Direction {
+    NorthWest,
+    NorthEast,
+    SouthWest,
+    SouthEast,
+}
+
+impl Distribution<Direction> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Direction {
+        match rng.gen_range(0..=3) {
+            0 => Direction::NorthWest,
+            1 => Direction::NorthEast,
+            2 => Direction::SouthWest,
+            _ => Direction::SouthEast,
+        }
+    }
+}
+
+impl Direction {
+
+    pub fn get_coordinate_movement(direction: &Direction) -> (f32, f32) {
+        let result = match direction {
+            Direction::NorthWest => (-1.0, 1.0),
+            Direction::NorthEast => (-1.0, -1.0),
+            Direction::SouthWest => (1.0, 1.0),
+            Direction::SouthEast => (1.0, -1.0),
+        };
+        result
+    }
+}
 
 pub struct VehicleDatabase {
     pub vehicles:  HashMap<String, Vehicle>
@@ -37,6 +70,13 @@ impl VehicleDatabase {
         Self { vehicles: HashMap::new() }
     }
 
+    pub fn add_default_vehicles(&mut self, default_ids: String) {
+        let ids = default_ids.split(',');
+        for id in ids {
+            self.add_vehicle(id);
+        }
+    }
+
     pub fn add_vehicle(&mut self, id: &str) {
         self.vehicles.insert(id.to_string(), Vehicle { 
             id: String::from(id), 
@@ -44,11 +84,58 @@ impl VehicleDatabase {
                 latitude: BASE_LATITUDE, 
                 longitude: BASE_LONGITUDE 
             }, 
+            direction: Direction::NorthWest,
             state: VehicleState::Free, 
             fuel: 100.0,
             booked_user: None,
             estimated_time_in_state: -1
         });
+    }
+
+    pub fn update_vehicle(&mut self, id: &str) {
+        let result = self.vehicles.get_mut(id);
+        if let Some(vehicle) = result {
+            match &mut vehicle.state {
+                VehicleState::Booked => {
+                    if vehicle.estimated_time_in_state > 0 {
+                        vehicle.estimated_time_in_state -= 1;
+                        vehicle.fuel -= env::var("FUEL_CONSUME_PER_TURN").unwrap_or(String::from("1.0")).parse::<f32>().unwrap() as f32;
+                        // updating location
+                        let movement = Direction::get_coordinate_movement(&vehicle.direction);
+                        vehicle.location.latitude += movement.0;
+                        vehicle.location.longitude += movement.1;
+                    } else {
+                        vehicle.state = VehicleState::Free;
+                        vehicle.booked_user = None;
+                        vehicle.estimated_time_in_state = 0;
+                    }
+                },
+                VehicleState::Free => {
+                    if vehicle.fuel <= 40.0 {
+                        vehicle.state = VehicleState::ReturningToBase;
+                    } 
+                },
+                VehicleState::ReturningToBase => {
+                    if vehicle.estimated_time_in_state > 0 {
+                        vehicle.estimated_time_in_state -= 1;
+                    } else {
+                        vehicle.state = VehicleState::Free;
+                        vehicle.fuel = 100.0;
+                        vehicle.location = VehicleDatabase::get_base_coordinates();
+                    }
+                },
+            }
+        } else {
+            println!("[Database] Error! No valid vehicle found with id [{}]", id);
+        }
+    }
+
+    pub fn get_vehicle_ids(&mut self) -> Vec<String> {
+        let mut ids = vec![];
+        for id in self.vehicles.keys() {
+            ids.push(id.to_owned());
+        }
+        ids
     }
 
     pub fn get_vehicle(&mut self, id: &str) -> Option<&Vehicle> {
@@ -57,29 +144,18 @@ impl VehicleDatabase {
     }
 
     pub fn set_to_booked(&mut self, id: &str, booked_user: Option<String>, estimated_time_in_state: i32) {
-        self.change_state(id, VehicleState::Booked, booked_user, estimated_time_in_state);
-    }
-
-    pub fn set_to_free(&mut self, id: &str) {
-        self.change_state(id, VehicleState::Free, None, -1);
-    }
-
-    pub fn set_to_returning(&mut self, id: &str, estimated_time_in_state: i32) {
-        self.change_state(id, VehicleState::ReturningToBase, None, estimated_time_in_state);
-    }
-
-    fn change_state(&mut self, id: &str, state: VehicleState, booked_user: Option<String>, estimated_time_in_state: i32) {
         let result = self.vehicles.get_mut(id);
         match result {
             Some(vehicle) => {
-                vehicle.state = state;
+                vehicle.state = VehicleState::Booked;
                 vehicle.booked_user = booked_user;
                 vehicle.estimated_time_in_state = estimated_time_in_state;
+                vehicle.direction = rand::random();
             },
             None => {
                 println!("[Database] Error! No valid vehicle found with id [{}]", id)
             }
-        }
+        }    
     }
 
     /**
@@ -108,13 +184,8 @@ impl VehicleDatabase {
         Location { latitude: BASE_LATITUDE as f64, longitude: BASE_LONGITUDE as f64 }
     }
 
-    pub fn set_position(&mut self, id: &String, latitude: f32, longitude: f32) {
-        let result = self.vehicles.get_mut(id);
-        if let Some(vehicle) = result {
-            vehicle.location = Coordinates { latitude, longitude }
-        } else {
-            println!("[Database] Error! No valid vehicle found with id [{}]", id);
-        }
+    pub fn get_base_coordinates() -> Coordinates {
+        Coordinates { latitude: BASE_LATITUDE, longitude: BASE_LONGITUDE }
     }
 
 }

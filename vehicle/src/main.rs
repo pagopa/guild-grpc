@@ -1,5 +1,7 @@
 use std::sync::{Arc, Mutex};
-use std::thread;
+use std::{env, thread};
+
+use dotenv::dotenv;
 
 use data::database::VehicleDatabase;
 
@@ -12,17 +14,24 @@ mod service;
 #[tokio::main]
 async fn main() {
 
-    let database = Arc::new(Mutex::new(VehicleDatabase::new()));
-    let mut db_instance = database.lock().unwrap();
-    db_instance.add_vehicle("vehicle-01");
-    drop(db_instance);
+    // load .env file and all its variables
+    dotenv().ok();
 
+    // initialize data base
+    let database = Arc::new(Mutex::new(VehicleDatabase::new()));
+    let mut db = database.lock().unwrap();
+    db.add_default_vehicles(env::var("STANDARD_VEHICLES_FLEET").unwrap_or(String::from("")));
+    drop(db);
+
+    // start thread: gRPC booking service
     let db_ref1 = Arc::clone(&database);
     let thread1 = thread::spawn(move || start_server(db_ref1));
 
+    // start thread: gRPC localization service
     let db_ref2 = Arc::clone(&database);
     let thread2 = thread::spawn(move || start_ping(db_ref2));
 
+    // joining threads and close main application
     thread1.join().unwrap();
     thread2.join().unwrap();
 }

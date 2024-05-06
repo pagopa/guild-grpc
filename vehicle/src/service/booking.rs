@@ -62,7 +62,7 @@ impl VehicleService for BookingServerImpl {
             
             // second database lock: set vehicle as Booked
             let mut db_guard = self.database.lock().unwrap();
-            db_guard.set_to_booked(vehicle_id.as_str(), Some(user_id.to_string()), rng.gen_range(10..50));
+            db_guard.set_to_booked(vehicle_id.as_str(), Some(user_id.to_string()), rng.gen_range(10..75));
             drop(db_guard);
             
             println!("[Booking Receiver] Vehicle id [{}] correctly booked!", vehicle_id);
