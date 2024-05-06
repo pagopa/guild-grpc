@@ -2,19 +2,24 @@ use std::{collections::HashMap, env};
 
 use rand::{distributions::{Distribution, Standard}, Rng};
 
-use crate::service::booking::common::Location;
-
 const BASE_LATITUDE: f32 = 41.90;
 const BASE_LONGITUDE: f32 = 12.45;
 
 pub struct Vehicle {
     pub id: String,
+    pub r#type: VehicleType,
     pub location: Coordinates,
     pub state: VehicleState,
     pub fuel: f32,
     pub booked_user: Option<String>,
     pub direction: Direction,
     pub estimated_time_in_state: i32
+}
+
+pub enum VehicleType {
+    Car,
+    Bicycle,
+    Motorcycle,
 }
 
 pub struct Coordinates {
@@ -24,7 +29,7 @@ pub struct Coordinates {
 
 #[derive(PartialEq)]
 pub enum VehicleState {
-    Free,
+    Available,
     Booked,
     ReturningToBase,
 }
@@ -70,22 +75,31 @@ impl VehicleDatabase {
         Self { vehicles: HashMap::new() }
     }
 
-    pub fn add_default_vehicles(&mut self, default_ids: String) {
-        let ids = default_ids.split(',');
-        for id in ids {
-            self.add_vehicle(id);
+    pub fn init_fleet(&mut self) {
+        let car_fleet_size = env::var("CAR_FLEET_SIZE").unwrap_or(String::from("5")).parse::<i32>().unwrap();
+        for idx in 1..car_fleet_size + 1 {
+            self.add_vehicle(format!("CAR{:0fill$}", idx, fill=8).as_str(), VehicleType::Car);
+        }
+        let bicycle_fleet_size = env::var("BICYCLE_FLEET_SIZE").unwrap_or(String::from("3")).parse::<i32>().unwrap();
+        for idx in 1..bicycle_fleet_size + 1 {
+            self.add_vehicle(format!("BIC{:0fill$}", idx, fill=8).as_str(), VehicleType::Bicycle);
+        }
+        let motorcycle_fleet_size = env::var("MOTORCYCLE_FLEET_SIZE").unwrap_or(String::from("2")).parse::<i32>().unwrap();
+        for idx in 1..motorcycle_fleet_size + 1 {
+            self.add_vehicle(format!("MOT{:0fill$}", idx, fill=8).as_str(), VehicleType::Motorcycle);
         }
     }
 
-    pub fn add_vehicle(&mut self, id: &str) {
+    pub fn add_vehicle(&mut self, id: &str, vehicle_type: VehicleType) {
         self.vehicles.insert(id.to_string(), Vehicle { 
             id: String::from(id), 
             location: Coordinates { 
                 latitude: BASE_LATITUDE, 
                 longitude: BASE_LONGITUDE 
             }, 
+            r#type: vehicle_type,
             direction: Direction::NorthWest,
-            state: VehicleState::Free, 
+            state: VehicleState::Available, 
             fuel: 100.0,
             booked_user: None,
             estimated_time_in_state: -1
@@ -105,12 +119,12 @@ impl VehicleDatabase {
                         vehicle.location.latitude += movement.0 * 0.001;
                         vehicle.location.longitude += movement.1 * 0.001;
                     } else {
-                        vehicle.state = VehicleState::Free;
+                        vehicle.state = VehicleState::Available;
                         vehicle.booked_user = None;
                         vehicle.estimated_time_in_state = 0;
                     }
                 },
-                VehicleState::Free => {
+                VehicleState::Available => {
                     if vehicle.fuel <= 40.0 {
                         vehicle.state = VehicleState::ReturningToBase;
                     } 
@@ -119,7 +133,7 @@ impl VehicleDatabase {
                     if vehicle.estimated_time_in_state > 0 {
                         vehicle.estimated_time_in_state -= 1;
                     } else {
-                        vehicle.state = VehicleState::Free;
+                        vehicle.state = VehicleState::Available;
                         vehicle.fuel = 100.0;
                         vehicle.location = VehicleDatabase::get_base_coordinates();
                     }
@@ -156,32 +170,6 @@ impl VehicleDatabase {
                 println!("[Database] Error! No valid vehicle found with id [{}]", id)
             }
         }    
-    }
-
-    /**
-     * Get the identifier of the nearest vehicle based on latitude and longitude
-     */
-    pub fn get_nearest(&mut self, latitude: f64, longitude: f64) -> Option<String> {
-        let mut vehicle_by_distance = vec![];
-        for (_, vehicle) in self.vehicles.iter() {
-            if vehicle.state == VehicleState::Free {
-                let delta_lat = vehicle.location.latitude as f64 - latitude;
-                let delta_lon = vehicle.location.longitude as f64 - longitude;
-                let quadratic_distance = delta_lat.powi(2) + delta_lon.powi(2);
-                let distance = quadratic_distance.sqrt();
-                vehicle_by_distance.push((distance, vehicle));
-            }
-        }
-        vehicle_by_distance.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-        let mut result = None;
-        if let Some(&(_, vehicle)) = vehicle_by_distance.first() {
-            result = Some(vehicle.id.to_owned());
-        }
-        result
-    }
-
-    pub fn get_base_location() -> Location {
-        Location { latitude: BASE_LATITUDE as f64, longitude: BASE_LONGITUDE as f64 }
     }
 
     pub fn get_base_coordinates() -> Coordinates {

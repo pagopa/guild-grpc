@@ -41,21 +41,19 @@ impl VehicleService for BookingServerImpl {
         let user_id = &book_confirmation_request.user_id;
         println!("[Booking Receiver] Received request for booking confirmation for user [{}]", user_id);
 
-        let location = match book_confirmation_request.location.to_owned() {
-            Some(loc) => loc,
-            None => VehicleDatabase::get_base_location(),
-        };
+        let vehicle_id = book_confirmation_request.vehicle_id.to_owned();
 
         // first database lock: get nearest vehicle identifier
         let mut db_guard = self.database.lock().unwrap();
-        let nearest_vehicle = db_guard.get_nearest(location.latitude, location.longitude);
+        let mut can_be_booked = false;
+        if let Some(vehicle) = db_guard.get_vehicle(vehicle_id.as_str()) {
+            can_be_booked = vehicle.booked_user == None;
+        }
         drop(db_guard);
         
-        let mut success = false;
         let message;
-        if let Some(vehicle_id) = nearest_vehicle {
+        if can_be_booked {
             println!("[Booking Receiver] Found a free vehicle. Vehicle id: [{}]", vehicle_id);
-            success = true;
             message = String::from("Booked!");
 
             println!("[Booking Receiver] Setting vehicle with id [{}] as Booked", vehicle_id);
@@ -67,10 +65,10 @@ impl VehicleService for BookingServerImpl {
             
             println!("[Booking Receiver] Vehicle id [{}] correctly booked!", vehicle_id);
         } else {
-            println!("[Booking Receiver] No free vehicle found for user [{}]", user_id);
+            println!("[Booking Receiver] No vehicle with id [{}] found for user [{}].", vehicle_id, user_id);
             message = String::from("No free vehicle found!");
         }
-        let response = AckResponse { message, success };
+        let response = AckResponse { message, success: can_be_booked };
         Ok(Response::new(response))
     }
 }

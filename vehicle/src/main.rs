@@ -1,5 +1,5 @@
 use std::sync::{Arc, Mutex};
-use std::{env, thread};
+use std::thread;
 
 use dotenv::dotenv;
 
@@ -20,7 +20,7 @@ async fn main() {
     // initialize data base
     let database = Arc::new(Mutex::new(VehicleDatabase::new()));
     let mut db = database.lock().unwrap();
-    db.add_default_vehicles(env::var("STANDARD_VEHICLES_FLEET").unwrap_or(String::from("")));
+    db.init_fleet();
     drop(db);
 
     // start thread: gRPC booking service

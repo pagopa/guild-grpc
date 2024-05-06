@@ -12,5 +12,6 @@ service VehicleService {
 // The request message containing the user's id and location (lat/lon)
 message BookConfirmationRequest {
     string user_id = 1;
-    common.Location location = 2;
+    string vehicle_id = 2;
+    common.Location location = 3;
 }
