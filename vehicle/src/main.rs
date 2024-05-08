@@ -4,12 +4,12 @@ use std::thread;
 use dotenv::dotenv;
 
 use data::database::VehicleDatabase;
-
-use crate::service::localization::start_ping;
-use crate::service::booking::start_server;
+use crate::interfaces::grpc::start_ping;
+use crate::interfaces::grpc::start_server;
 
 mod data;
 mod service;
+mod interfaces;
 
 #[tokio::main]
 async fn main() {
