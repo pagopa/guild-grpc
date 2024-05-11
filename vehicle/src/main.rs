@@ -4,8 +4,9 @@ use std::thread;
 use dotenv::dotenv;
 
 use data::database::VehicleDatabase;
-use crate::interfaces::grpc::start_ping;
+use crate::interfaces::batch::start_ping;
 use crate::interfaces::grpc::start_server;
+use crate::interfaces::rest::start_rest_server;
 
 mod data;
 mod service;
@@ -28,7 +29,11 @@ async fn main() {
     let db_ref2 = Arc::clone(&database);
     let thread2 = thread::spawn(move || start_ping(db_ref2));
 
+    let db_ref3 = Arc::clone(&database);
+    let thread3 = thread::spawn(move || start_rest_server(db_ref3));
+
     // joining threads and close main application
     thread1.join().unwrap();
     thread2.join().unwrap();
+    thread3.join().unwrap();
 }

@@ -66,13 +66,14 @@ impl Direction {
 }
 
 pub struct VehicleDatabase {
-    pub vehicles:  HashMap<String, Vehicle>
+    pub vehicles:  HashMap<String, Vehicle>,
+    pub ping_send_mode: u32
 }
 
 impl VehicleDatabase {
 
     pub fn new() -> Self {
-        let mut self_instance = Self { vehicles: HashMap::new() };
+        let mut self_instance = Self { vehicles: HashMap::new(), ping_send_mode: 0 };
         let car_fleet_size = env::var("CAR_FLEET_SIZE").unwrap_or(String::from("5")).parse::<i32>().unwrap();
         for idx in 1..car_fleet_size + 1 {
             self_instance.add_vehicle(format!("CAR{:0fill$}", idx, fill=8).as_str(), VehicleType::Car);
@@ -86,6 +87,19 @@ impl VehicleDatabase {
             self_instance.add_vehicle(format!("MOT{:0fill$}", idx, fill=8).as_str(), VehicleType::Motorcycle);
         }
         self_instance
+    }
+
+    pub fn change_ping_send_mode(&mut self) {
+        if self.ping_send_mode == 0 {
+            self.ping_send_mode = 1;
+        } else {
+            self.ping_send_mode = 0;
+        }
+    }
+
+    pub fn is_stream_ping_active(&mut self) -> bool {
+        let result = self.ping_send_mode == 1;
+        result.to_owned()
     }
 
     pub fn add_vehicle(&mut self, id: &str, vehicle_type: VehicleType) {
