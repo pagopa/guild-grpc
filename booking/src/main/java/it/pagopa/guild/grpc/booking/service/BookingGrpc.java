@@ -44,17 +44,11 @@ public class BookingGrpc extends it.pagopa.guild.grpc.booking.BookingServiceGrpc
                         String.format("Vehicle %s is already booked", request.getVehicleId()));
             }
 
-            /* // TODO: send book confirmation to vehicle service
             AckResponseDto ackResponseVehicle = vehicleClient.sendBookConfirmation(
                     request.getUserId(),
+                    request.getVehicleId(),
                     request.getLocation().getLatitude(),
-                    request.getLocation().getLongitude()); */
-
-            // AckResponse MOCK
-            AckResponseDto ackResponseVehicle = AckResponseDto.builder()
-                    .message("OK")
-                    .success(true)
-                    .build();
+                    request.getLocation().getLongitude());
 
             // Check grpc api response, create booking on db and send related response to the caller
             if (ackResponseVehicle.getSuccess()) {
