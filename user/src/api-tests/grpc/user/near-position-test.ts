@@ -1,7 +1,6 @@
 import { check, fail } from "k6";
 import { getConfigOrThrow } from "../utils/config";
 import grpc from 'k6/net/grpc';
-import { uuid } from 'uuidv4';
 
 /**
  * Test constants
@@ -88,6 +87,9 @@ export default function () {
   );
   check(localizationResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
     { name: "get-vehicle-position-test-localization" });
+  if(localizationResponse.status !==grpc.StatusOK){
+    fail(`Error retrieving near vehicle, localization status code: [${localizationResponse.status}]`);
+  }
   let localizationResponseBody = localizationResponse.message as any;
   const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
   const bookingRequest = {
