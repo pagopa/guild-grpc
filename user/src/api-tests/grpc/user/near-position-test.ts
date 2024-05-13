@@ -71,11 +71,12 @@ function initializeClients() {
 
 export default function () {
   initializeClients();
+  const userId = "123";//TODO deve essere randomico? può essere fisso?
   const localizationUrl = "/localization.Localization/GetNearVehicles";
   const localizationRequest = {
-    user_id: "123",
+    user_id: userId,
     location: {
-      latitude: -37412929.48437618,
+      latitude: -37412929.48437618,//TODO posizione fissa?
       longitude: -74393901.02844512
     },
     vehicle_level: 1
@@ -87,20 +88,22 @@ export default function () {
   );
   check(localizationResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
     { name: "get-vehicle-position-test-localization" });
+  let localizationResponseBody = localizationResponse.message as any;
   const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
   const bookingRequest = {
     location: {
       latitude: -37412929.48437618,
       longitude: -74393901.02844512
     },
-    user_id: "1",
-    vehicle_id: "60c9e1152a61292d843b7413"
+    user_id: userId,
+    vehicle_id: localizationResponseBody.vehicle_id
   };
   const bookingResponse = bookingClient.invoke(
     bookingUrl,
     bookingRequest,
     { tags: { name: "get-vehicle-position-test-booking" } }
   );
+  
   check(bookingResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
     { name: "get-vehicle-position-test-localization" });
 }
