@@ -107,6 +107,6 @@ export default function () {
   );
   
   check(bookingResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
-    { name: "get-vehicle-position-test-localization" });
+    { name: "get-vehicle-position-test-booking" });
 }
 
