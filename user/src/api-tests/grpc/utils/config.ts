@@ -17,7 +17,8 @@ export type K6Config = t.TypeOf<typeof K6Config>;
 export type IConfig = t.TypeOf<typeof IConfig>;
 export const IConfig = t.intersection([
   t.type({
-    GRPC_SERVER_HOST: NonEmptyString,
+    BOOKING_GRPC_SERVER_HOST: NonEmptyString,
+    LOCALIZATION_GRPC_SERVER_HOST: NonEmptyString,
   }),
   K6Config,
 ]);
