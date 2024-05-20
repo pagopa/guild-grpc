@@ -34,6 +34,27 @@ services:
     networks: 
       - guild_grpc_network
 
+  guild_grpc_vehicle_service:
+    container_name: vehicle-service
+    restart: on-failure
+    build:
+      context: ../vehicle
+      dockerfile: Dockerfile
+    ports:
+      - "50051:50051"
+      - "50051:50052"
+      - "8082:8080"
+    environment:
+      - CAR_FLEET_SIZE: 3000
+      - BICYCLE_FLEET_SIZE: 1500
+      - MOTORCYCLE_FLEET_SIZE: 500
+      - LOCALIZATION_SERVER_URL: http://[::1]:50052
+      - BOOKING_SERVICE_EXPOSED_PORT: 50051
+      - LOCALIZATION_PING_INTERVAL: 60
+      - FUEL_CONSUME_PER_TURN: 2.0
+    networks: 
+      - guild_grpc_network
+
 volumes:
   mongodb_data_container: {}
   

@@ -1,0 +1,33 @@
+[package]
+name = "vehicle"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+# Rust implementation of gRPC framework
+tonic = "0.11.0"
+
+reqwest = { version = "0.12", features = ["json"] }
+
+# Compiler for .proto files 
+prost = "0.12.4"
+
+# Framework for webapp
+tokio = { version = "1.18", features = ["macros", "rt-multi-thread"] }
+warp = "0.3"
+futures = "0.3.30"
+
+# Serializer and deserializer
+serde = { version = "1.0", features = ["derive"] }
+
+# Random number generator
+rand = "0.8"
+
+# Environment variable loader
+dotenv = "0.15.0"
+
+
+[build-dependencies]
+tonic-build = "0.11.0"
+

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package localization;
+import "common/common.proto";
+
+service LocalizationService {
+    rpc SendLocation (stream VehicleLocationRequest) returns (common.AckResponse) {}
+}
+
+message VehicleLocationRequest {
+    string vehicle_id = 1;
+    common.Location location = 2;
+}
