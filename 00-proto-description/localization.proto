@@ -30,7 +30,6 @@ message NearVehicleResponse {
 message Vehicle {
     string vehicle_id = 1;
     Location location = 2;
-    double fuel = 3;
 }
 
 message Location {
