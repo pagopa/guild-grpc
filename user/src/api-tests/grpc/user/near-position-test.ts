@@ -85,9 +85,9 @@ export default function () {
   const localizationStreaming = new grpc.Stream(localizationClient, localizationUrl);
   localizationStreaming.on("data", response => {
     const vehicles = (response as any).vehicle;
-    check(vehicles, { 'Response have vehicles': (r) => r && r.vehicle?.length > 0 },
-    { tags: { name: "get-vehicle-position-test-localization" } });
-    if(!vehicles || vehicles.length==0){
+    check(vehicles, { 'Response have vehicles': (r) => r && r?.length > 0 },
+      { name: "get-vehicle-position-test-localization" });
+    if (!vehicles || vehicles.length == 0) {
       fail("No vehicle information received from localization service");
     }
     const vehicle = vehicles[0];
