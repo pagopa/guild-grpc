@@ -28,3 +28,5 @@ vehicle/target/*
 
 # Environment
 *.env
+
+user/node_modules/*

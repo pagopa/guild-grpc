@@ -46,26 +46,26 @@ bookingClient.load(['definitions'], 'booking.proto', 'common.proto');
 let initialized = false;
 
 function initializeClients() {
-  try{
-  if (!initialized) {
-    const bookingGrpcHost = config.BOOKING_GRPC_SERVER_HOST;
-    const localizationGrpcHost = config.LOCALIZATION_GRPC_SERVER_HOST;
-    console.log(`Connecting localzation client to endpoint: ${localizationGrpcHost}`);
-    localizationClient.connect(localizationGrpcHost, {
-      plaintext: true //here set to true to allow unsecure communication for test purpose
-    });
-    console.log(`Localization client connected successfully: ${localizationClient}`);
-    console.log(`Connecting booking client to endpoint: ${bookingGrpcHost}`);
-    bookingClient.connect(bookingGrpcHost, {
-      plaintext: true //here set to true to allow unsecure communication for test purpose
-    });
-    console.log(`Booking client connected successfully: ${bookingClient}`);
-    initialized = true;
+  try {
+    if (!initialized) {
+      const bookingGrpcHost = config.BOOKING_GRPC_SERVER_HOST;
+      const localizationGrpcHost = config.LOCALIZATION_GRPC_SERVER_HOST;
+      console.log(`Connecting localzation client to endpoint: ${localizationGrpcHost}`);
+      localizationClient.connect(localizationGrpcHost, {
+        plaintext: true //here set to true to allow unsecure communication for test purpose
+      });
+      console.log(`Localization client connected successfully: ${localizationClient}`);
+      console.log(`Connecting booking client to endpoint: ${bookingGrpcHost}`);
+      bookingClient.connect(bookingGrpcHost, {
+        plaintext: true //here set to true to allow unsecure communication for test purpose
+      });
+      console.log(`Booking client connected successfully: ${bookingClient}`);
+      initialized = true;
+    }
+  } catch (error) {
+    console.log(`Error initializing clients. Error: ${error}`);
+    fail(`Cannot perform test, error initializing clients`);
   }
-} catch(error){
-  console.log(`Error initializing clients. Error: ${error}`);
-  fail(`Cannot perform test, error initializing clients`);
-}
 }
 
 export default function () {
@@ -75,37 +75,39 @@ export default function () {
   const localizationRequest = {
     user_id: userId,
     location: {
-      latitude: -37412929.48437618,//TODO posizione fissa?
-      longitude: -74393901.02844512
+      latitude: 40.48,//TODO posizione fissa?
+      longitude: 30.30
     },
     vehicle_level: 1
   };
-  const localizationResponse = localizationClient.invoke(
-    localizationUrl,
-    localizationRequest,
-    { tags: { name: "get-vehicle-position-test-localization" } }
-  );
-  check(localizationResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
-    { name: "get-vehicle-position-test-localization" });
-  if(localizationResponse.status !==grpc.StatusOK){
-    fail(`Error retrieving near vehicle, localization status code: [${localizationResponse.status}]`);
+  const localizationStreaming = new grpc.Stream(localizationClient, localizationUrl, { tags: { name: "get-vehicle-position-test-localization" } });
+  let vehicle: any = undefined;
+  localizationStreaming.on("data", response => {
+    vehicle = response;
+  });
+  localizationStreaming.on("error", error => {
+    fail(`Error retrieving near vehicle, localization status code: [${error}]`);
+  });
+  localizationStreaming.on("end", _ => {
+  });
+  if (!vehicle) {
+    fail(`No vehicle received from localization service`);
   }
-  let localizationResponseBody = localizationResponse.message as any;
   const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
   const bookingRequest = {
     location: {
-      latitude: -37412929.48437618,
-      longitude: -74393901.02844512
+      latitude: 40.48,//TODO posizione fissa?
+      longitude: 30.30
     },
     user_id: userId,
-    vehicle_id: localizationResponseBody.vehicle_id
+    vehicle_id: vehicle.vehicle_id
   };
   const bookingResponse = bookingClient.invoke(
     bookingUrl,
     bookingRequest,
     { tags: { name: "get-vehicle-position-test-booking" } }
   );
-  
+
   check(bookingResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
     { name: "get-vehicle-position-test-booking" });
 }
