@@ -25,3 +25,6 @@ replay_pid*
 
 vehicle/target/*
 *.DS_Store
+
+# Environment
+*.env
