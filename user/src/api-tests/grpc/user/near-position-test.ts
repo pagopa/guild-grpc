@@ -82,7 +82,7 @@ export default function () {
     vehicle_level: 1
   };
   const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
-  const localizationStreaming = new grpc.Stream(localizationClient, localizationUrl);
+  const localizationStreaming = new grpc.Stream(localizationClient, localizationUrl, { tags: { name: "get-vehicle-position-test-localization" } });
   localizationStreaming.on("data", response => {
     const vehicles = (response as any).vehicle;
     check(vehicles, { 'Response have vehicles': (r) => r && r?.length > 0 },
