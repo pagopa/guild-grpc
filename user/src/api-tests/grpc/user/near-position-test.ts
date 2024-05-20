@@ -72,12 +72,13 @@ export default function () {
   initializeClients();
   const userId = "123";//TODO deve essere randomico? può essere fisso?
   const localizationUrl = "/localization.Localization/GetNearVehicles";
+  const userLocation =  {
+    latitude: 41.90,
+    longitude: 41.90
+  };
   const localizationRequest = {
     user_id: userId,
-    location: {
-      latitude: 40.48,//TODO posizione fissa?
-      longitude: 30.30
-    },
+    location: userLocation,
     vehicle_level: 1
   };
   const localizationStreaming = new grpc.Stream(localizationClient, localizationUrl, { tags: { name: "get-vehicle-position-test-localization" } });
@@ -95,10 +96,7 @@ export default function () {
   }
   const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
   const bookingRequest = {
-    location: {
-      latitude: 40.48,//TODO posizione fissa?
-      longitude: 30.30
-    },
+    location: userLocation,
     user_id: userId,
     vehicle_id: vehicle.vehicle_id
   };
