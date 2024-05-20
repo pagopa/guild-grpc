@@ -23,10 +23,8 @@
 hs_err_pid*
 replay_pid*
 
-<<<<<<< Updated upstream
 vehicle/target/*
 *.DS_Store
-=======
+
 # Environment
 *.env
->>>>>>> Stashed changes
