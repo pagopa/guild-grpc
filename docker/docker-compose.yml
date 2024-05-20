@@ -55,6 +55,20 @@ services:
     networks: 
       - guild_grpc_network
 
+  guild_grpc_localization_service:
+    container_name: localization-service
+    restart: on-failure
+    build:
+      context: ../localization
+      dockerfile: Dockerfile
+    ports:
+      - "50052:50051"
+      - "8081:8081"
+    environment:
+      - MONGODB_URI:mongodb://root-user:root-pw@localhost:27017/
+    networks: 
+      - guild_grpc_network
+
 volumes:
   mongodb_data_container: {}
   
