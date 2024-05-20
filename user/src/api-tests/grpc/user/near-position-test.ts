@@ -94,6 +94,8 @@ export default function () {
   if (!vehicle) {
     fail(`No vehicle received from localization service`);
   }
+  //send request to localization service
+  localizationStreaming.write(localizationRequest);
   const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
   const bookingRequest = {
     location: userLocation,
