@@ -1,4 +1,4 @@
-import { check, fail } from "k6";
+import { check, fail, sleep } from "k6";
 import { getConfigOrThrow } from "../utils/config";
 import grpc from 'k6/net/grpc';
 
@@ -84,7 +84,7 @@ export default function () {
   const localizationStreaming = new grpc.Stream(localizationClient, localizationUrl, { tags: { name: "get-vehicle-position-test-localization" } });
   let vehicle: any = undefined;
   localizationStreaming.on("data", response => {
-    vehicle = response;
+    vehicle = (response as any).vehicle[0];
   });
   localizationStreaming.on("error", error => {
     fail(`Error retrieving near vehicle, localization status code: [${error}]`);
@@ -96,6 +96,7 @@ export default function () {
   }
   //send request to localization service
   localizationStreaming.write(localizationRequest);
+  sleep(10);
   const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
   const bookingRequest = {
     location: userLocation,
