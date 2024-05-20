@@ -72,7 +72,7 @@ export default function () {
   initializeClients();
   const userId = "123";//TODO deve essere randomico? può essere fisso?
   const localizationUrl = "/localization.Localization/GetNearVehicles";
-  const userLocation =  {
+  const userLocation = {
     latitude: 41.90,
     longitude: 41.90
   };
@@ -81,35 +81,36 @@ export default function () {
     location: userLocation,
     vehicle_level: 1
   };
-  const localizationStreaming = new grpc.Stream(localizationClient, localizationUrl, { tags: { name: "get-vehicle-position-test-localization" } });
-  let vehicle: any = undefined;
+  const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
+  const localizationStreaming = new grpc.Stream(localizationClient, localizationUrl);
   localizationStreaming.on("data", response => {
-    vehicle = (response as any).vehicle[0];
+    const vehicles = (response as any).vehicle;
+    check(vehicles, { 'Response have vehicles': (r) => r && r.vehicle?.length > 0 },
+    { tags: { name: "get-vehicle-position-test-localization" } });
+    if(!vehicles || vehicles.length==0){
+      fail("No vehicle information received from localization service");
+    }
+    const vehicle = vehicles[0];
+    const bookingRequest = {
+      location: userLocation,
+      user_id: userId,
+      vehicle_id: vehicle.vehicle_id
+    };
+    const bookingResponse = bookingClient.invoke(
+      bookingUrl,
+      bookingRequest,
+      { tags: { name: "get-vehicle-position-test-booking" } }
+    );
+
+    check(bookingResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
+      { name: "get-vehicle-position-test-booking" });
   });
   localizationStreaming.on("error", error => {
     fail(`Error retrieving near vehicle, localization status code: [${error}]`);
   });
   localizationStreaming.on("end", _ => {
   });
-  if (!vehicle) {
-    fail(`No vehicle received from localization service`);
-  }
   //send request to localization service
   localizationStreaming.write(localizationRequest);
-  sleep(10);
-  const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
-  const bookingRequest = {
-    location: userLocation,
-    user_id: userId,
-    vehicle_id: vehicle.vehicle_id
-  };
-  const bookingResponse = bookingClient.invoke(
-    bookingUrl,
-    bookingRequest,
-    { tags: { name: "get-vehicle-position-test-booking" } }
-  );
-
-  check(bookingResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
-    { name: "get-vehicle-position-test-booking" });
 }
 
