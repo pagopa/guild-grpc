@@ -73,7 +73,7 @@ pub struct VehicleDatabase {
 impl VehicleDatabase {
 
     pub fn new() -> Self {
-        let mut self_instance = Self { vehicles: HashMap::new(), ping_send_mode: 0 };
+        let mut self_instance = Self { vehicles: HashMap::new(), ping_send_mode: 1 };
         let car_fleet_size = env::var("CAR_FLEET_SIZE").unwrap_or(String::from("5")).parse::<i32>().unwrap();
         for idx in 1..car_fleet_size + 1 {
             self_instance.add_vehicle(format!("CAR{:0fill$}", idx, fill=8).as_str(), VehicleType::Car);
