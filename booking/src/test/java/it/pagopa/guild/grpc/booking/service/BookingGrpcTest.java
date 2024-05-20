@@ -5,6 +5,7 @@ import io.grpc.stub.StreamObserver;
 import it.pagopa.guild.grpc.booking.Booking;
 import it.pagopa.guild.grpc.booking.Common;
 import it.pagopa.guild.grpc.booking.client.VehicleClient;
+import it.pagopa.guild.grpc.booking.dto.AckResponseDto;
 import it.pagopa.guild.grpc.booking.entity.Location;
 import it.pagopa.guild.grpc.booking.entity.Vehicle;
 import it.pagopa.guild.grpc.booking.entity.VehicleStatus;
@@ -54,11 +55,10 @@ class BookingGrpcTest {
         when(bookingMapper.toLocationEntity(request.getLocation()))
                 .thenReturn(new Location(request.getLocation().getLatitude(), request.getLocation().getLongitude()));
 
-        // TODO: Mock vehicle client success response
-        /* AckResponseDto ackResponseVehicle = AckResponseDto.builder().success(true).message("OK").build();
+        AckResponseDto ackResponseVehicle = AckResponseDto.builder().success(true).message("OK").build();
         when(vehicleClient.sendBookConfirmation(
-                userId, request.getLocation().getLatitude(), request.getLocation().getLongitude()))
-                .thenReturn(ackResponseVehicle); */
+                userId, request.getVehicleId(), request.getLocation().getLatitude(), request.getLocation().getLongitude()))
+                .thenReturn(ackResponseVehicle);
 
         StreamObserver<Common.AckResponse> responseObserver = mock(StreamObserver.class);
         bookingGrpcService.book(request, responseObserver);
