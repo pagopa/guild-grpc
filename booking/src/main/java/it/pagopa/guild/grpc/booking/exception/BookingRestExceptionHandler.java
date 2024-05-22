@@ -48,13 +48,14 @@ public class BookingRestExceptionHandler {
                 .body(ErrorResponse.builder().message(Constants.VEHICLE_ALREADY_BOOKED).build());
     }
 
-    @ExceptionHandler(ResourceNotAvailableException.class)
+    @ExceptionHandler(BookingConfirmationException.class)
     ResponseEntity<ErrorResponse> handleBookingConfirmationExceptionError(BookingConfirmationException e) {
         log.error("vehicle sendBookConfirmation REST failed", e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.builder().message(e.getError()).build());
     }
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ValidationErrorResponse> handleMethodArgumentNotValidError(MethodArgumentNotValidException e) {
         Map<String, String> errors = e.getBindingResult().getAllErrors().stream()
                 .collect(Collectors.toMap(
