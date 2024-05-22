@@ -7,82 +7,79 @@ import it.pagopa.guild.grpc.booking.Common;
 import it.pagopa.guild.grpc.booking.client.VehicleClient;
 import it.pagopa.guild.grpc.booking.dto.AckResponseDto;
 import it.pagopa.guild.grpc.booking.entity.Vehicle;
-import it.pagopa.guild.grpc.booking.entity.VehicleStatus;
+import it.pagopa.guild.grpc.booking.exception.BookingConfirmationException;
 import it.pagopa.guild.grpc.booking.exception.ResourceNotAvailableException;
 import it.pagopa.guild.grpc.booking.exception.ResourceNotFoundException;
 import it.pagopa.guild.grpc.booking.mapper.BookingMapper;
-import it.pagopa.guild.grpc.booking.repository.VehicleRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import it.pagopa.guild.grpc.booking.utils.Constants;
 
 @GrpcService
 @Slf4j
 public class BookingGrpc extends it.pagopa.guild.grpc.booking.BookingServiceGrpc.BookingServiceImplBase {
 
-    private final VehicleRepository vehicleRepository;
-    private final VehicleClient vehicleClient;
+    private final DataManagerService dataManagerService;
+    private final VehicleClient vehicleClientGrpc;
     private final BookingMapper bookingMapper;
 
-    public BookingGrpc(VehicleRepository vehicleRepository, VehicleClient vehicleClient, BookingMapper bookingMapper) {
-        this.vehicleRepository = vehicleRepository;
-        this.vehicleClient = vehicleClient;
+    public BookingGrpc(DataManagerService dataManagerService, @Qualifier("vehicleClientGrpc") VehicleClient vehicleClientGrpc,
+                       BookingMapper bookingMapper) {
+        this.dataManagerService = dataManagerService;
+        this.vehicleClientGrpc = vehicleClientGrpc;
         this.bookingMapper = bookingMapper;
     }
 
     @Override
-    // TODO: transaction with mogno and vehicle service
+    // TODO: transaction with mongo and vehicle service
     public void book(Booking.BookingRequest request, StreamObserver<Common.AckResponse> responseObserver) {
         try {
-            // Check if vehicle exists
-            Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            String.format("Vehicle %s doesn't exists", request.getVehicleId())));
+            // Check if vehicle exists and if it is not booked yet, and get it
+            Vehicle vehicle = dataManagerService.checkVehicleAvailabilityAndGet(request.getVehicleId());
 
-            // Check if vehicle is not booked yet
-            if (vehicle.getStatus() == VehicleStatus.BOOKED) {
-                throw  new ResourceNotAvailableException(
-                        String.format("Vehicle %s is already booked", request.getVehicleId()));
-            }
-
-            AckResponseDto ackResponseVehicle = vehicleClient.sendBookConfirmation(
+            // send book confirmation to vehicle service
+            AckResponseDto ackResponseVehicle = vehicleClientGrpc.sendBookConfirmation(
                     request.getUserId(),
                     request.getVehicleId(),
                     request.getLocation().getLatitude(),
                     request.getLocation().getLongitude());
 
-            // Check grpc api response, create booking on db and send related response to the caller
+            // Check grpc api response, add booking on db and send related response to the caller
             if (ackResponseVehicle.getSuccess()) {
-                vehicle.setStatus(VehicleStatus.BOOKED);
-                vehicle.addBooking(it.pagopa.guild.grpc.booking.entity.Booking.builder()
-                        .userId(request.getUserId())
-                        .location(bookingMapper.toLocationEntity(request.getLocation()))
-                        .build());
-                vehicleRepository.save(vehicle);
+                dataManagerService.updateVehicleBookingAndStatus(vehicle, request.getUserId(),
+                        bookingMapper.toLocationDto(request.getLocation()));
                 var ackResponse = Common.AckResponse.newBuilder()
                         .setSuccess(true)
-                        .setMessage("Vehicle booked successfully")
+                        .setMessage(Constants.BOOKING_SUCCESS)
                         .build();
                 responseObserver.onNext(ackResponse);
                 responseObserver.onCompleted();
             } else {
                 responseObserver.onError(Status.INTERNAL
-                        .withDescription("Vehicle booking failed, please try again")
+                        .withDescription(Constants.BOOKING_GENERIC_FAILURE)
                         .asRuntimeException());
             }
         } catch (ResourceNotFoundException e) {
             log.error("Vehicle booking failed", e);
             responseObserver.onError(Status.NOT_FOUND
-                    .withDescription("Vehicle not found")
+                    .withDescription(Constants.VEHICLE_NOT_FOUND)
                     .asRuntimeException());
         } catch (ResourceNotAvailableException e) {
             log.error("Vehicle booking failed", e);
             responseObserver.onError(Status.FAILED_PRECONDITION
-                    .withDescription("Vehicle is already booked")
+                    .withDescription(Constants.VEHICLE_ALREADY_BOOKED)
+                    .asRuntimeException());
+        } catch (BookingConfirmationException e) {
+            log.error("vehicle sendBookConfirmation gRPC failed", e);
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription(e.getError())
                     .asRuntimeException());
         } catch (Exception e) {
             log.error("Vehicle booking failed", e);
             responseObserver.onError(Status.UNKNOWN
-                    .withDescription("Vehicle booking failed, please try again")
+                    .withDescription(Constants.GENERIC_ERROR)
                     .asRuntimeException());
         }
 
