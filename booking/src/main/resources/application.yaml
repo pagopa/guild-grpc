@@ -18,6 +18,9 @@ grpc:
       address: localhost:9091
       negotiation-type: plaintext
 
+server:
+  port: 8082
+
 logging:
   level:
     root: WARN
