@@ -20,6 +20,10 @@ grpc:
 
 server:
   port: 8082
+rest:
+  service:
+    vehicle:
+      url: http://localhost:8080
 
 logging:
   level:
