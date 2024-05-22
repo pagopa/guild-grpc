@@ -6,20 +6,27 @@ import it.pagopa.guild.grpc.booking.Booking;
 import it.pagopa.guild.grpc.booking.Common;
 import it.pagopa.guild.grpc.booking.client.VehicleClient;
 import it.pagopa.guild.grpc.booking.dto.AckResponseDto;
-import it.pagopa.guild.grpc.booking.entity.Location;
+import it.pagopa.guild.grpc.booking.dto.LocationDto;
 import it.pagopa.guild.grpc.booking.entity.Vehicle;
 import it.pagopa.guild.grpc.booking.entity.VehicleStatus;
 import it.pagopa.guild.grpc.booking.entity.VehicleType;
+import it.pagopa.guild.grpc.booking.exception.BookingConfirmationException;
+import it.pagopa.guild.grpc.booking.exception.ResourceNotAvailableException;
+import it.pagopa.guild.grpc.booking.exception.ResourceNotFoundException;
 import it.pagopa.guild.grpc.booking.mapper.BookingMapper;
-import it.pagopa.guild.grpc.booking.repository.VehicleRepository;
+import it.pagopa.guild.grpc.booking.utils.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.util.ArrayList;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -28,10 +35,11 @@ import static org.mockito.Mockito.*;
 class BookingGrpcTest {
 
     @Mock
-    private VehicleRepository vehicleRepository;
+    private DataManagerService dataManagerService;
 
     @Mock
-    private VehicleClient vehicleClient;
+    @Qualifier("vehicleClientGrpc")
+    private VehicleClient vehicleClientGrpc;
 
     @Mock
     private BookingMapper bookingMapper;
@@ -45,44 +53,45 @@ class BookingGrpcTest {
     }*/
 
     @Test
-    public void testBook_Success() {
+    public void test_Success() throws ResourceNotAvailableException, ResourceNotFoundException, BookingConfirmationException {
         String userId = "user123";
         String vehicleId = "vehicleXYZ";
         Booking.BookingRequest request = getBookingRequest(userId, vehicleId);
         Vehicle vehicle = getVehicleEntity(vehicleId, VehicleStatus.AVAILABLE);
 
-        when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
-        when(bookingMapper.toLocationEntity(request.getLocation()))
-                .thenReturn(new Location(request.getLocation().getLatitude(), request.getLocation().getLongitude()));
+        when(dataManagerService.checkVehicleAvailabilityAndGet(vehicleId)).thenReturn(vehicle);
+        LocationDto locationDto = LocationDto.builder()
+                .latitude(request.getLocation().getLatitude())
+                .longitude(request.getLocation().getLongitude())
+                .build();
+        when(bookingMapper.toLocationDto(request.getLocation())).thenReturn(locationDto);
 
         AckResponseDto ackResponseVehicle = AckResponseDto.builder().success(true).message("OK").build();
-        when(vehicleClient.sendBookConfirmation(
+        when(vehicleClientGrpc.sendBookConfirmation(
                 userId, request.getVehicleId(), request.getLocation().getLatitude(), request.getLocation().getLongitude()))
                 .thenReturn(ackResponseVehicle);
 
         StreamObserver<Common.AckResponse> responseObserver = mock(StreamObserver.class);
         bookingGrpcService.book(request, responseObserver);
 
-        verify(vehicleRepository).save(vehicle);
-        assertEquals(VehicleStatus.BOOKED, vehicle.getStatus());
-        assertEquals(1, vehicle.getBookings().size());
-
+        verify(dataManagerService).updateVehicleBookingAndStatus(vehicle, userId, locationDto);
         Common.AckResponse expectedResponse = Common.AckResponse.newBuilder()
                 .setSuccess(true)
-                .setMessage("Vehicle booked successfully")
+                .setMessage(Constants.BOOKING_SUCCESS)
                 .build();
         verify(responseObserver).onNext(expectedResponse);
         verify(responseObserver).onCompleted();
         verify(responseObserver, never()).onError(any());
     }
 
-    @Test
-    public void testBook_VehicleNotFound() {
+    @ParameterizedTest
+    @MethodSource("provideResourceExceptionArguments")
+    public void test_ResourceException(Class<? extends Exception> exceptionClass) throws ResourceNotAvailableException, ResourceNotFoundException {
         String userId = "user123";
         String vehicleId = "vehicleXYZ";
         Booking.BookingRequest request = getBookingRequest(userId, vehicleId);
 
-        when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.empty());
+        when(dataManagerService.checkVehicleAvailabilityAndGet(vehicleId)).thenThrow(exceptionClass);
 
         StreamObserver<Common.AckResponse> responseObserver = mock(StreamObserver.class);
         bookingGrpcService.book(request, responseObserver);
@@ -92,14 +101,21 @@ class BookingGrpcTest {
         verify(responseObserver).onError(any(StatusRuntimeException.class));
     }
 
+    private static Stream<Arguments> provideResourceExceptionArguments() {
+        return Stream.of(
+                Arguments.of( ResourceNotFoundException.class),
+                Arguments.of(ResourceNotAvailableException.class),
+                Arguments.of(RuntimeException.class)
+        );
+    }
+
     @Test
-    public void testBook_VehicleAlreadyBooked() {
+    public void test_VehicleClientError() throws BookingConfirmationException {
         String userId = "user123";
         String vehicleId = "vehicleXYZ";
         Booking.BookingRequest request = getBookingRequest(userId, vehicleId);
-        Vehicle vehicle = getVehicleEntity(vehicleId, VehicleStatus.BOOKED);
 
-        when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
+        when(vehicleClientGrpc.sendBookConfirmation(userId, vehicleId, 10.0, 5.0)).thenThrow(BookingConfirmationException.class);
 
         StreamObserver<Common.AckResponse> responseObserver = mock(StreamObserver.class);
         bookingGrpcService.book(request, responseObserver);
@@ -108,25 +124,6 @@ class BookingGrpcTest {
         verify(responseObserver, never()).onCompleted();
         verify(responseObserver).onError(any(StatusRuntimeException.class));
     }
-
-    @Test
-    public void testBook_UnexpectedException() {
-        String userId = "user123";
-        String vehicleId = "vehicleXYZ";
-        Booking.BookingRequest request = getBookingRequest(userId, vehicleId);
-
-        doThrow(new RuntimeException("Unexpected error"))
-                .when(vehicleRepository).findById(vehicleId);
-
-        StreamObserver<Common.AckResponse> responseObserver = mock(StreamObserver.class);
-        bookingGrpcService.book(request, responseObserver);
-
-        verify(responseObserver, never()).onNext(any());
-        verify(responseObserver, never()).onCompleted();
-        verify(responseObserver).onError(any(StatusRuntimeException.class));
-    }
-
-    // TODO: client exception
 
     private static Vehicle getVehicleEntity(String vehicleId, VehicleStatus status) {
         return new Vehicle(vehicleId, VehicleType.CAR, status, new ArrayList<>());
