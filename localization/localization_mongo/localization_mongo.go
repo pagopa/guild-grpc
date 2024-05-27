@@ -83,6 +83,7 @@ func UpsertVehicleLocation(id string, latitude float64, longitude float64) {
 
 	toUpdate := bson.M{
 		"$set": bson.D{
+			{Key: "_id", Value: id},
 			{Key: "id", Value: id},
 			{Key: "type", Value: "CAR"},
 			{Key: "status", Value: "AVAILABLE"},
