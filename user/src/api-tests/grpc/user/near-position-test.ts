@@ -75,10 +75,9 @@ export default function () {
   const localizationRequest = {
     user_id: userId,
     location: {
-      latitude: -37412929.48437618,//TODO posizione fissa?
-      longitude: -74393901.02844512
-    },
-    vehicle_level: 1
+      latitude: 78.10,//TODO posizione fissa?
+      longitude: 46.60
+    }
   };
   const localizationResponse = localizationClient.invoke(
     localizationUrl,
@@ -94,8 +93,8 @@ export default function () {
   const bookingUrl = "/it.pagopa.guild.grpc.booking.BookingService/Book";
   const bookingRequest = {
     location: {
-      latitude: -37412929.48437618,
-      longitude: -74393901.02844512
+      latitude: 78.10,//TODO posizione fissa?
+      longitude: 46.60
     },
     user_id: userId,
     vehicle_id: localizationResponseBody.vehicle_id
