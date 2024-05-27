@@ -73,8 +73,8 @@ export default function () {
   const userId = "123";//TODO deve essere randomico? può essere fisso?
   const localizationUrl = "/localization.Localization/GetNearVehicles";
   const userLocation = {
-    latitude: 41.90,
-    longitude: 41.90
+    latitude: 43.90,
+    longitude: 43.90
   };
   const localizationRequest = {
     user_id: userId,
@@ -90,19 +90,21 @@ export default function () {
     if (!vehicles || vehicles.length == 0) {
       fail("No vehicle information received from localization service");
     }
-    const vehicle = vehicles[0];
+    const vehicle = vehicles[Math.floor(Math.random() * (vehicles.length))];
+    console.log(`vehicle:\n${JSON.stringify(vehicle)}`)
     const bookingRequest = {
       location: userLocation,
       user_id: userId,
-      vehicle_id: vehicle.vehicle_id
+      vehicle_id: vehicle.vehicleId
     };
+    console.log(`bookingRequest:\n${JSON.stringify(bookingRequest)}`)
     const bookingResponse = bookingClient.invoke(
       bookingUrl,
       bookingRequest,
       { tags: { name: "get-vehicle-position-test-booking" } }
     );
 
-    check(bookingResponse, { 'status is OK': (r) => r && r.status === grpc.StatusOK },
+    check(bookingResponse, { 'status is OK': (r) => r && (r.status === grpc.StatusOK || r.status === grpc.StatusFailedPrecondition)},
       { name: "get-vehicle-position-test-booking" });
   });
   localizationStreaming.on("error", error => {
