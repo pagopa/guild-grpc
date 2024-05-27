@@ -9,7 +9,7 @@ use tonic::Request;
 
 use crate::data::database::VehicleDatabase;
 use crate::interfaces::grpc::common::Location;
-use crate::interfaces::grpc::localization::localization_service_client::LocalizationServiceClient;
+use crate::interfaces::grpc::localization::localization_client::LocalizationClient;
 use crate::interfaces::grpc::localization::VehicleLocationRequest;
 use crate::interfaces::{AckResponseRest, LocationRest, VehicleLocationRequestRest};
 
@@ -47,7 +47,7 @@ pub async fn update_locations(database: &Arc<Mutex<VehicleDatabase>>) -> Vec<(St
 }
 
 
-pub async fn send_location_via_grpc(database: &Arc<Mutex<VehicleDatabase>>, mut client: LocalizationServiceClient<Channel>) {
+pub async fn send_location_via_grpc(database: &Arc<Mutex<VehicleDatabase>>, mut client: LocalizationClient<Channel>) {
     println!("[Localization Sender] [gRPC] >>>>> Connected to Localization service!");
         
     let interval_size: u64 = env::var("LOCALIZATION_PING_INTERVAL").unwrap_or(String::from("10")).parse().unwrap();
@@ -79,7 +79,7 @@ pub async fn send_location_via_grpc(database: &Arc<Mutex<VehicleDatabase>>, mut 
         let stream_size = locations.len();
         let request_stream = futures::stream::iter(locations);
         match client.send_location(Request::new(request_stream)).await {
-            Err(_) => println!("[Localization Sender] [gRPC] <<<<< Connection stream with Localization service closed. Impossible to send updated position to remote service."),
+            Err(e) => println!("[Localization Sender] [gRPC] <<<<< Connection stream with Localization service closed. Impossible to send updated position to remote service. {}", e),
             Ok(response) => println!("[Localization Sender] [gRPC] Sent [{}] vehicle locations to Localization server. Remote server response: [{}]", stream_size, response.into_inner().message),
         }
     }
