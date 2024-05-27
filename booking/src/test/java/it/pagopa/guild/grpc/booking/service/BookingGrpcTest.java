@@ -115,7 +115,8 @@ class BookingGrpcTest {
         String vehicleId = "vehicleXYZ";
         Booking.BookingRequest request = getBookingRequest(userId, vehicleId);
 
-        when(vehicleClientGrpc.sendBookConfirmation(userId, vehicleId, 10.0, 5.0)).thenThrow(BookingConfirmationException.class);
+        when(vehicleClientGrpc.sendBookConfirmation(userId, vehicleId, request.getLocation().getLatitude(),
+                request.getLocation().getLongitude())).thenThrow(BookingConfirmationException.class);
 
         StreamObserver<Common.AckResponse> responseObserver = mock(StreamObserver.class);
         bookingGrpcService.book(request, responseObserver);
