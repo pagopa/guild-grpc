@@ -1,5 +1,7 @@
-package it.pagopa.guild.grpc.booking.client;
+package it.pagopa.guild.grpc.booking.client.impl;
 
+import it.pagopa.guild.grpc.booking.client.VehicleClient;
+import it.pagopa.guild.grpc.booking.client.VehicleClientFeign;
 import it.pagopa.guild.grpc.booking.dto.AckResponseDto;
 import it.pagopa.guild.grpc.booking.dto.BookRequestDto;
 import it.pagopa.guild.grpc.booking.dto.LocationDto;

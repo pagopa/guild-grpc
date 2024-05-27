@@ -1,9 +1,10 @@
-package it.pagopa.guild.grpc.booking.client;
+package it.pagopa.guild.grpc.booking.client.impl;
 
 import io.grpc.StatusRuntimeException;
 import it.pagopa.guild.grpc.booking.Common;
 import it.pagopa.guild.grpc.booking.Vehicle;
 import it.pagopa.guild.grpc.booking.VehicleServiceGrpc;
+import it.pagopa.guild.grpc.booking.client.VehicleClient;
 import it.pagopa.guild.grpc.booking.dto.AckResponseDto;
 import it.pagopa.guild.grpc.booking.exception.BookingConfirmationException;
 import it.pagopa.guild.grpc.booking.mapper.BookingMapper;

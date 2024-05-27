@@ -1,5 +1,6 @@
 package it.pagopa.guild.grpc.booking.client;
 
+import it.pagopa.guild.grpc.booking.client.impl.VehicleClientRest;
 import it.pagopa.guild.grpc.booking.dto.AckResponseDto;
 import it.pagopa.guild.grpc.booking.exception.BookingConfirmationException;
 import org.junit.jupiter.api.Test;
