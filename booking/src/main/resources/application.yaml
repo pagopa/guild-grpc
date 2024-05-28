@@ -25,6 +25,9 @@ rest:
     vehicle:
       url: http://localhost:8080
 
+project:
+  version: @project.version@
+
 logging:
   level:
     root: WARN

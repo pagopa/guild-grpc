@@ -1,0 +1,146 @@
+openapi: 3.0.1
+info:
+  title: Booking service API
+  description: Java SpringBoot REST API to book vehicles for car sharing services.
+  contact:
+    name: Enrico Monte
+    email: enrico.monte@pagopa.it
+  version: 0.0.1-SNAPSHOT
+servers:
+- url: http://localhost:8082
+  description: Development Server
+paths:
+  /booking:
+    post:
+      tags:
+      - booking-controller
+      summary: "Book a vehicle by vechicle id, for a user"
+      description: Returns a success feedback
+      operationId: bookVehicle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookRequestDto'
+        required: true
+      responses:
+        "500":
+          description: Generic internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "201":
+          description: Vehicle booked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AckResponseDto'
+        "400":
+          description: "Bad request: wrong or missing inputs"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        "502":
+          description: Booking confirmation to vehicle service failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: Vehicle not available (already booked)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: No vehicle found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    BookRequestDto:
+      required:
+      - location
+      - user_id
+      - vehicle_id
+      type: object
+      properties:
+        vehicle_id:
+          type: string
+          description: ID of the vehicle
+          example: b5b23d1b-ad4a-4a74
+        location:
+          $ref: '#/components/schemas/LocationDto'
+        user_id:
+          type: string
+          description: ID of the user
+          example: user-99a2
+    LocationDto:
+      required:
+      - latitude
+      - longitude
+      type: object
+      properties:
+        latitude:
+          type: number
+          description: Latitude
+          format: double
+          example: 36.07
+        longitude:
+          type: number
+          description: Longitude
+          format: double
+          example: -95.9
+      description: User location object containing latitude and longitude
+    ErrorResponse:
+      required:
+      - success
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Feedback about the success of the operation
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: Vehicle booking failed
+    AckResponseDto:
+      required:
+      - success
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Feedback about the success of the operation
+          example: true
+        message:
+          type: string
+          description: Error message
+          example: Vehicle booked successfully
+    ValidationErrorResponse:
+      required:
+      - success
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Feedback about the success of the operation
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: Vehicle booking failed
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+            description: Map of error messages
+            example: "{\"userId\":\"UserId is required\"}"
+          description: Map of error messages
+          example:
+            userId: UserId is required
