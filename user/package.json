@@ -11,10 +11,17 @@
     "build": "npm-run-all -s clean build:* ",
     "clean": "npm-run-all -s clean:*",
     "clean:dist": "rimraf dist",
-    "run-tests-with-docker": "npm-run-all -s clean webpack run-test-with-docker:*",
-    "run-test-with-docker:get-near-vehicle": "docker run --env-file .env -i --rm -v $(pwd)/dist:/dist grafana/k6 run /dist/near-position-test.js",
+    "run-tests-with-docker-grpc": "npm-run-all -s clean webpack run-test-with-docker:*-grpc",
+    "run-test-with-docker:get-near-vehicle-grpc": "docker run --env-file .env -i --rm -v $(pwd)/dist:/dist grafana/k6 run /dist/near-position-test-grpc.js",
+    "run-tests-locally-grpc": "npm-run-all -s clean webpack run-test-locally:*-grpc",
+    "run-test-locally:get-near-vehicle-grpc": "export $(cat .env | xargs) && k6 run $(pwd)/dist/near-position-test-grpc.js",
+    "run-tests-with-docker-rest": "npm-run-all -s clean webpack run-test-with-docker:*-rest",
+    "run-test-with-docker:get-near-vehicle-rest": "docker run --env-file .env -i --rm -v $(pwd)/dist:/dist grafana/k6 run /dist/near-position-test-rest.js",
+    "run-tests-locally-rest": "npm-run-all -s clean webpack run-test-locally:*-rest",
+    "run-test-locally:get-near-vehicle-rest": "export $(cat .env | xargs) && k6 run $(pwd)/dist/near-position-test-rest.js",
     "run-tests-locally": "npm-run-all -s clean webpack run-test-locally:*",
-    "run-test-locally:get-near-vehicle": "export $(cat .env | xargs) && k6 run $(pwd)/dist/near-position-test.js",
+    "run-tests-with-docker": "npm-run-all -s clean webpack run-test-with-docker:*",
+    
     "webpack": "export SET NODE_OPTIONS=--openssl-legacy-provider && shx rm -rf dist && webpack && cp -r definitions dist/definitions"
   },
   "devDependencies": {
@@ -27,7 +34,7 @@
       "@pagopa/danger-custom-rules": "^2.0.3",
       "@pagopa/eslint-config": "^1.3.1",
       "@pagopa/openapi-codegen-ts": "^11.1.0",
-      "@types/k6": "^0.51.1",
+      "@types/k6": "^0.51.0",
       "babel-loader": "8.2.2",
       "clean-webpack-plugin": "4.0.0-alpha.0",
       "copy-webpack-plugin": "^9.0.1",
@@ -47,6 +54,7 @@
   "dependencies": {
       "@pagopa/ts-commons": "^10.7.1",
       "k6": "^0.0.0",
+      "@types/k6": "^0.51.0",
       "k6-stat": "1.0.6",
       "fp-ts": "^2.10.5",
       "io-ts": "^2.2.16",
