@@ -17921,7 +17921,9 @@ var K6Config = io_ts__WEBPACK_IMPORTED_MODULE_3__.type({
 });
 var IConfig = io_ts__WEBPACK_IMPORTED_MODULE_3__.intersection([io_ts__WEBPACK_IMPORTED_MODULE_3__.type({
   BOOKING_GRPC_SERVER_HOST: _pagopa_ts_commons_lib_strings__WEBPACK_IMPORTED_MODULE_0__.NonEmptyString,
-  LOCALIZATION_GRPC_SERVER_HOST: _pagopa_ts_commons_lib_strings__WEBPACK_IMPORTED_MODULE_0__.NonEmptyString
+  LOCALIZATION_GRPC_SERVER_HOST: _pagopa_ts_commons_lib_strings__WEBPACK_IMPORTED_MODULE_0__.NonEmptyString,
+  BOOKING_REST_HOST: _pagopa_ts_commons_lib_strings__WEBPACK_IMPORTED_MODULE_0__.NonEmptyString,
+  LOCALIZATION_REST_HOST: _pagopa_ts_commons_lib_strings__WEBPACK_IMPORTED_MODULE_0__.NonEmptyString
 }), K6Config]);
 
 // No need to re-evaluate this object for each call

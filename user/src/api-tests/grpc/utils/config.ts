@@ -19,6 +19,8 @@ export const IConfig = t.intersection([
   t.type({
     BOOKING_GRPC_SERVER_HOST: NonEmptyString,
     LOCALIZATION_GRPC_SERVER_HOST: NonEmptyString,
+    BOOKING_REST_HOST: NonEmptyString,
+    LOCALIZATION_REST_HOST: NonEmptyString
   }),
   K6Config,
 ]);

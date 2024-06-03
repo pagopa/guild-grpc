@@ -91,13 +91,11 @@ export default function () {
       fail("No vehicle information received from localization service");
     }
     const vehicle = vehicles[Math.floor(Math.random() * (vehicles.length))];
-    console.log(`vehicle:\n${JSON.stringify(vehicle)}`)
     const bookingRequest = {
       location: userLocation,
       user_id: userId,
       vehicle_id: vehicle.vehicleId
     };
-    console.log(`bookingRequest:\n${JSON.stringify(bookingRequest)}`)
     const bookingResponse = bookingClient.invoke(
       bookingUrl,
       bookingRequest,
