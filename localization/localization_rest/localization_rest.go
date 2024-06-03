@@ -45,6 +45,15 @@ func StartGINServer() error {
 	return nil
 }
 
+// @Summary Get near vehicles
+// @Description get near vehicles by position
+// @ID get-near-vehicles
+// @Accept  json
+// @Produce application/json
+// @Param   latitude     query    number     true        "45.97"
+// @Param   longitude     query    number     true        "12.22"
+// @Success 200 {string} string  "ok"
+// @Router /vehicles [get]
 // getNearVehicles responds with the list of all vehicles as JSON.
 func getNearVehicles(c *gin.Context) {
 	latitude := c.DefaultQuery("latitude", "45.97")

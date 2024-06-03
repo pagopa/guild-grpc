@@ -1,0 +1,32 @@
+info:
+  version: 0.0.1
+  title: gRPC Guild
+  contact: {}
+paths:
+  /vehicles:
+    get:
+      tags: [REST]
+      consumes:
+      - application/json
+      description: get near vehicles by position
+      operationId: get-near-vehicles
+      parameters:
+      - description: "45.97"
+        in: query
+        name: latitude
+        required: true
+        type: number
+      - description: "12.22"
+        in: query
+        name: longitude
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+      summary: Get near vehicles
+swagger: "2.0"
