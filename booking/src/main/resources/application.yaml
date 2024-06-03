@@ -15,7 +15,7 @@ grpc:
     port: 9090
   client:
     vehicle:
-      address: localhost:9091
+      address: localhost:50051
       negotiation-type: plaintext
 
 server:

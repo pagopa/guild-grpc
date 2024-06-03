@@ -2,7 +2,7 @@ use std::{env, sync::{Arc, Mutex}, thread, time::Duration};
 
 use crate::{data::database::VehicleDatabase, service::localization::{send_location_via_rest, update_locations}};
 use crate::service::localization::send_location_via_grpc;
-use crate::interfaces::grpc::localization::localization_service_client::LocalizationServiceClient;
+use crate::interfaces::grpc::localization::localization_client::LocalizationClient;
 
 /**
  * This tokio task permits to start the execution of the ping towards Localization server
@@ -19,9 +19,9 @@ pub async fn start_ping(database: Arc<Mutex<VehicleDatabase>>) {
 
         if is_stream_ping_active {
             
-            let url = env::var("LOCALIZATION_SERVER_GRPC_URL").unwrap_or(String::from("http://[::1]:50052"));
+            let url = env::var("LOCALIZATION_SERVER_GRPC_URL").unwrap_or(String::from("http://[::]:50052"));
             println!("[Localization Sender] [gRPC] >>>>> Starting connection to Localization service. Pointing to URL [{}].", url);
-            match LocalizationServiceClient::connect(url).await {
+            match LocalizationClient::connect(url).await {
                 Err(_) => {
                     update_locations(&database).await;
                     println!("[Localization Sender] [gRPC] <<<<< Stream with Localization service currently closed. Trying again in [{}] seconds", retry);

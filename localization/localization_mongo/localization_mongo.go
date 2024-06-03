@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,45 +20,30 @@ type LocationModel struct {
 
 type VehicleLocationModel struct {
 	ID       string        `json:"id"`
+	Status   string        `json:"status"`
 	Location LocationModel `json:"location"`
 }
 
-func createGeospatialIndex(collection *mongo.Collection) error {
-	indexModel := mongo.IndexModel{
-		Keys: bson.M{
-			"location": "2dsphere",
-		},
-	}
-	_, err := collection.Indexes().CreateOne(context.TODO(), indexModel)
-	return err
+var (
+	mongoClient *mongo.Client
+	vehicles    *mongo.Collection
+	once        sync.Once
+)
+
+func init() {
+	// Initialize MongoDB client once
+	once.Do(func() {
+		var err error
+		mongoClient, err = GetMongoClient()
+		if err != nil {
+			log.Fatalf("Could not connect to MongoDB: %v", err)
+		}
+		vehicles = mongoClient.Database("guild-grpc-db").Collection("vehicles")
+		createGeospatialIndex(vehicles)
+	})
 }
 
 func QueryProximity(latitude float64, longitude float64) []VehicleLocationModel {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
-	}
-
-	uri := os.Getenv("MONGODB_URI")
-	if uri == "" {
-		log.Fatal("Set your 'MONGODB_URI' environment variable.")
-	}
-	client, err := mongo.Connect(context.TODO(), options.Client().
-		ApplyURI(uri))
-
-	if err != nil {
-		panic(err)
-	}
-
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			log.Fatalf("fatal: %v", err)
-		}
-	}()
-
-	coll := client.Database("guild-grpc-db").Collection("localizations")
-
-	createGeospatialIndex(coll)
-
 	filter := bson.M{
 		"location": bson.M{
 			"$near": bson.M{
@@ -68,9 +54,10 @@ func QueryProximity(latitude float64, longitude float64) []VehicleLocationModel 
 				"$maxDistance": 100000,
 			},
 		},
+		"status": "AVAILABLE",
 	}
 
-	cur, err := coll.Find(context.TODO(), filter)
+	cur, err := vehicles.Find(context.TODO(), filter)
 	var locations []VehicleLocationModel
 	if err != nil {
 		log.Fatalf("fatal: %v", err)
@@ -92,34 +79,14 @@ func QueryProximity(latitude float64, longitude float64) []VehicleLocationModel 
 }
 
 func UpsertVehicleLocation(id string, latitude float64, longitude float64) {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
-	}
-
-	uri := os.Getenv("MONGODB_URI")
-	if uri == "" {
-		log.Fatal("Set your 'MONGODB_URI' environment variable.")
-	}
-	client, err := mongo.Connect(context.TODO(), options.Client().
-		ApplyURI(uri))
-
-	if err != nil {
-		panic(err)
-	}
-
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
-
-	coll := client.Database("guild-grpc-db").Collection("localizations")
-
 	filter := bson.M{"id": id}
 
-	update := bson.M{
+	toUpdate := bson.M{
 		"$set": bson.D{
+			{Key: "_id", Value: id},
 			{Key: "id", Value: id},
+			{Key: "type", Value: "CAR"},
+			{Key: "status", Value: "AVAILABLE"},
 			{Key: "location", Value: bson.D{
 				{Key: "type", Value: "Point"},
 				{Key: "coordinates", Value: []float64{latitude, longitude}},
@@ -128,7 +95,7 @@ func UpsertVehicleLocation(id string, latitude float64, longitude float64) {
 	}
 
 	opts := options.Update().SetUpsert(true)
-	result, err := coll.UpdateOne(context.Background(), filter, update, opts)
+	result, err := vehicles.UpdateOne(context.Background(), filter, toUpdate, opts)
 	if err != nil {
 		log.Fatalf("fatal: %v", err)
 	}
@@ -136,7 +103,17 @@ func UpsertVehicleLocation(id string, latitude float64, longitude float64) {
 	fmt.Printf("Document upserted with ID: %s\n", result.UpsertedID)
 }
 
-func GetCollection() *mongo.Collection {
+func createGeospatialIndex(collection *mongo.Collection) error {
+	indexModel := mongo.IndexModel{
+		Keys: bson.M{
+			"location": "2dsphere",
+		},
+	}
+	_, err := collection.Indexes().CreateOne(context.TODO(), indexModel)
+	return err
+}
+
+func GetMongoClient() (*mongo.Client, error) {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
 	}
@@ -150,17 +127,7 @@ func GetCollection() *mongo.Collection {
 	client, err := mongo.Connect(context.TODO(), options.Client().
 		ApplyURI(uri))
 
-	if err != nil {
-		panic(err)
-	}
+	log.Print("Mongo connected!")
 
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
-
-	coll := client.Database("guild-grpc-db").Collection("localizations")
-
-	return coll
+	return client, err
 }

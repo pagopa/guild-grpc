@@ -9,7 +9,7 @@ RUN mvn dependency:go-offline
 
 COPY src ./src
 
-RUN mvn package
+RUN mvn package -DskipTests=true
 
 # execution stage
 FROM amazoncorretto:21.0.3

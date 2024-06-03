@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	gRPC_port = flag.Int("grpc_port", 50051, "The gRPC server port")
+	gRPC_port = flag.Int("grpc_port", 50052, "The gRPC server port")
 )
 
 // server is used to implement localization.LocalizationServer.
@@ -64,13 +64,8 @@ func (s *server) GetNearVehicles(req *pb.UserLocationRequest, stream pb.Localiza
 	vehicles := mapVehicleLocationModelsToVehicles(vl)
 
 	// Stream each vehicle to the client
-	for i := 1; i <= 10; i++ {
-		if err := stream.Send(&pb.NearVehicleResponse{Vehicle: vehicles}); err != nil {
-			return err
-		}
-
-		// Sleep for demonstration purposes
-		time.Sleep(1 * time.Second)
+	if err := stream.Send(&pb.NearVehicleResponse{Vehicle: vehicles}); err != nil {
+		return err
 	}
 
 	response := &pb.NearVehicleResponse{
