@@ -18,6 +18,16 @@ grpc:
       address: localhost:50051
       negotiation-type: plaintext
 
+server:
+  port: 8082
+rest:
+  service:
+    vehicle:
+      url: http://localhost:8080
+
+project:
+  version: @project.version@
+
 logging:
   level:
     root: WARN
