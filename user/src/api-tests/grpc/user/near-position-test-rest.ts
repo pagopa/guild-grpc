@@ -34,6 +34,12 @@ export let options = {
   },
 };
 
+const headersParams = {
+  headers: {
+      'Content-Type': 'application/json'
+  }
+};
+
 export default function () {
   const localization = {
     latitude: 43.90,
@@ -64,6 +70,7 @@ export default function () {
     user_id: userId
   };
   const bookingResponse = http.post(bookingUrl, JSON.stringify(bookingRequest), {
+    ...headersParams,
     tags: { name: "booking-create-book" }
   });
   check(
