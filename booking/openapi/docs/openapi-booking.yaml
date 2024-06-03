@@ -6,6 +6,9 @@ info:
     name: Enrico Monte
     email: enrico.monte@pagopa.it
   version: 0.0.1-SNAPSHOT
+externalDocs:
+  description: YAML api doc
+  url: v3/api-docs.yaml
 servers:
 - url: http://localhost:8082
   description: Development Server
@@ -30,20 +33,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        "201":
-          description: Vehicle booked successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AckResponseDto'
-        "400":
-          description: "Bad request: wrong or missing inputs"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-        "502":
-          description: Booking confirmation to vehicle service failed
+        "404":
+          description: No vehicle found
           content:
             application/json:
               schema:
@@ -54,12 +45,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        "404":
-          description: No vehicle found
+        "502":
+          description: Booking confirmation to vehicle service failed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        "400":
+          description: "Bad request: wrong or missing inputs"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        "201":
+          description: Vehicle booked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AckResponseDto'
 components:
   schemas:
     BookRequestDto:
@@ -109,19 +112,6 @@ components:
           type: string
           description: Error message
           example: Vehicle booking failed
-    AckResponseDto:
-      required:
-      - success
-      type: object
-      properties:
-        success:
-          type: boolean
-          description: Feedback about the success of the operation
-          example: true
-        message:
-          type: string
-          description: Error message
-          example: Vehicle booked successfully
     ValidationErrorResponse:
       required:
       - success
@@ -144,3 +134,16 @@ components:
           description: Map of error messages
           example:
             userId: UserId is required
+    AckResponseDto:
+      required:
+      - success
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Feedback about the success of the operation
+          example: true
+        message:
+          type: string
+          description: Error message
+          example: Vehicle booked successfully
