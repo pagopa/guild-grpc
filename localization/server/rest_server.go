@@ -1,11 +1,12 @@
-package localization_rest
+package server
 
 import (
 	"flag"
 	"fmt"
-	data "localization/localization_mongo"
+	data "localization/data"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,13 +27,6 @@ type Location struct {
 	Longitude float64 `json:"longitude"`
 }
 
-// vehicles slice to seed record vehicle data.
-var vehicles = []VehicleLocation{
-	{ID: "1", Location: Location{Latitude: 45.97, Longitude: 12.33}},
-	{ID: "2", Location: Location{Latitude: 45.98, Longitude: 12.34}},
-	{ID: "3", Location: Location{Latitude: 45.99, Longitude: 12.35}},
-}
-
 func StartGINServer() error {
 	router := gin.Default()
 
@@ -47,10 +41,14 @@ func StartGINServer() error {
 
 // getNearVehicles responds with the list of all vehicles as JSON.
 func getNearVehicles(c *gin.Context) {
-	latitude := c.DefaultQuery("latitude", "45.97")
-	longitude := c.DefaultQuery("longitude", "12.22")
-	log.Printf("Get near vehicles from location (%v,%v)", latitude, longitude)
-	c.IndentedJSON(http.StatusOK, vehicles)
+	var latitude, _ = strconv.ParseFloat(c.DefaultQuery("latitude", "45.97"), 64)
+	var longitude, _ = strconv.ParseFloat(c.DefaultQuery("longitude", "12.22"), 64)
+	var vl []data.VehicleLocationModel = data.QueryProximity(latitude, longitude)
+	if vl == nil {
+		c.IndentedJSON(http.StatusOK, "No nearby vehicles within the defined radius")
+	} else {
+		c.IndentedJSON(http.StatusOK, vl)
+	}
 }
 
 // postVehicle adds a vehicle from JSON received in the request body.
@@ -63,8 +61,7 @@ func postVehicle(c *gin.Context) {
 		return
 	}
 
-	// Add the new vehicle_location to the slice.
-	vehicles = append(vehicles, vl)
+	// Add or udpate the Vehicle Location
 	data.UpsertVehicleLocation(vl.ID, vl.Location.Latitude, vl.Location.Longitude)
 	c.IndentedJSON(http.StatusCreated, vl)
 }

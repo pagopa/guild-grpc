@@ -1,9 +1,9 @@
-package localization_grpc
+package server
 
 import (
 	"flag"
 	"fmt"
-	data "localization/localization_mongo"
+	data "localization/data"
 	"localization/protofiles/localization"
 	pb "localization/protofiles/localization"
 	"log"
