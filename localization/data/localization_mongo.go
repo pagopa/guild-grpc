@@ -1,4 +1,4 @@
-package localization_mongo
+package data
 
 import (
 	"context"
