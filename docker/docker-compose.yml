@@ -36,6 +36,8 @@ services:
       - guild_grpc_mongo
     environment:
       - SPRING_DATA_MONGODB_host=mongo-db
+      - GRPC_CLIENT_VEHICLE_ADDRESS=vehicle-service:50051
+      - REST_SERVICE_VEHICLE_URL=http://vehicle-service:8080
     networks: 
       - guild_grpc_network
 
@@ -52,15 +54,14 @@ services:
       dockerfile: Dockerfile
     ports:
       - "50051:50051"
-      - "50051:50052"
-      - "8082:8080"
+      - "8080:8080"
     environment:
-      CAR_FLEET_SIZE: 3000
-      BICYCLE_FLEET_SIZE: 1500
-      MOTORCYCLE_FLEET_SIZE: 500
-      LOCALIZATION_SERVER_URL: http://[::1]:50052
+      CAR_FLEET_SIZE: 500
+      BICYCLE_FLEET_SIZE: 1
+      MOTORCYCLE_FLEET_SIZE: 1
+      LOCALIZATION_SERVER_GRPC_URL: http://localization-service:50052
       BOOKING_SERVICE_EXPOSED_PORT: 50051
-      LOCALIZATION_PING_INTERVAL: 60
+      LOCALIZATION_PING_INTERVAL: 1
       FUEL_CONSUME_PER_TURN: 2.0
     networks: 
       - guild_grpc_network
@@ -77,10 +78,10 @@ services:
       context: ../localization
       dockerfile: Dockerfile
     ports:
-      - "50052:50051"
+      - "50052:50052"
       - "8081:8081"
     environment:
-      - MONGODB_URI:mongodb://root-user:root-pw@localhost:27017/
+      MONGODB_URI: mongodb://root-user:root-pw@mongo-db:27017/
     networks: 
       - guild_grpc_network
 
