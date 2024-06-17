@@ -1,14 +1,10 @@
 # Generating folders 
 FROM rust:1.76 as build
 
-# Installing protobuffer compiler, MUSL and GCC tools
-RUN rustup target add x86_64-unknown-linux-musl
-RUN apt update && apt install -y musl-tools musl-dev
-RUN apt-get install -y build-essential
-RUN yes | apt install gcc-x86-64-linux-gnu
+
 RUN apt-get update && apt-get install -y protobuf-compiler
 
-# Copying files in folders in order to execute 'cargo build'
+# create a new empty shell project
 RUN USER=root cargo new --bin app
 WORKDIR /app
 COPY ./Cargo.lock ./Cargo.lock
@@ -17,21 +13,19 @@ COPY ./build.rs ./build.rs
 COPY ./proto ./proto
 
 # Compiling dependencies
-ENV RUSTFLAGS='-C linker=x86_64-linux-gnu-gcc'
-RUN cargo build --release --locked --target x86_64-unknown-linux-musl
+RUN cargo build --release
 RUN rm src/*.rs
-COPY ./src ./src 
+COPY ./src ./src
 RUN rm ./target/release/deps/*
 
 # Compiling binary
-RUN cargo build --release --locked --target x86_64-unknown-linux-musl
+RUN cargo build --release
 
 
-
-# Copy binary file, built in previous steps, in a new barebone image
-FROM scratch
-COPY --from=build /app/target/x86_64-unknown-linux-musl/release/vehicle /vehicle
+# Copy binary file, built in previous steps, in a new image
+FROM rust:1.76
+COPY --from=build /app/target/release/vehicle .
 
 # Run binary file
 EXPOSE 50051
-CMD ["/vehicle"]
+CMD ["./vehicle"]
