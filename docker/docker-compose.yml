@@ -19,10 +19,11 @@ services:
       - guild_grpc_network
 
   guild_grpc_booking_service:
-    #deploy:
-    #  resources:
-    #    limits:
-    #      cpus: '0.5'
+    deploy:
+     resources:
+       limits:
+         cpus: '0.5'
+         memory: '512M'
     restart: on-failure
     build:
       context: ../booking
@@ -39,6 +40,11 @@ services:
       - guild_grpc_network
 
   guild_grpc_vehicle_service:
+    deploy:
+     resources:
+       limits:
+         cpus: '0.5'
+         memory: '512M'
     container_name: vehicle-service
     restart: on-failure
     build:
@@ -60,6 +66,11 @@ services:
       - guild_grpc_network
 
   guild_grpc_localization_service:
+    deploy:
+     resources:
+       limits:
+         cpus: '0.5'
+         memory: '512M'
     container_name: localization-service
     restart: on-failure
     build:
