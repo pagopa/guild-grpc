@@ -43,7 +43,7 @@ func init() {
 	})
 }
 
-func QueryProximity(latitude float64, longitude float64) []VehicleLocationModel {
+func QueryProximity(latitude float64, longitude float64, page int64, size int64) []VehicleLocationModel {
 	filter := bson.M{
 		"location": bson.M{
 			"$near": bson.M{
@@ -51,13 +51,16 @@ func QueryProximity(latitude float64, longitude float64) []VehicleLocationModel 
 					"type":        "Point",
 					"coordinates": []float64{latitude, longitude},
 				},
-				"$maxDistance": 100000,
 			},
 		},
 		"status": "AVAILABLE",
 	}
-
-	cur, err := vehicles.Find(context.TODO(), filter)
+	var skip = page * size
+	log.Printf("skip: %v, limit: %v", skip, size)
+	findOptions := options.Find()
+	findOptions.SetSkip(skip)
+	findOptions.SetLimit(size)
+	cur, err := vehicles.Find(context.TODO(), filter, findOptions)
 	var locations []VehicleLocationModel
 	if err != nil {
 		log.Fatalf("fatal: %v", err)

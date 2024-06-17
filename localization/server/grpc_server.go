@@ -17,6 +17,10 @@ var (
 	gRPC_port = flag.Int("grpc_port", 50052, "The gRPC server port")
 )
 
+const (
+	MAX_STREAMING_PAGE_GET_VEHICLE int = 10
+)
+
 // server is used to implement localization.LocalizationServer.
 type server struct {
 	pb.UnimplementedLocalizationServer
@@ -60,20 +64,15 @@ func (s *server) GetNearVehicles(req *pb.UserLocationRequest, stream pb.Localiza
 	log.Printf("Received user location request: UserID %s, Latitude %f, Longitude %f\n",
 		req.UserId, req.Location.Latitude, req.Location.Longitude)
 
-	var vl []data.VehicleLocationModel = data.QueryProximity(req.Location.Latitude, req.Location.Longitude)
-	vehicles := mapVehicleLocationModelsToVehicles(vl)
+	var size = 10
+	for page := 0; page < MAX_STREAMING_PAGE_GET_VEHICLE; page++ {
+		var vl []data.VehicleLocationModel = data.QueryProximity(req.Location.Latitude, req.Location.Longitude, int64(page), int64(size))
+		vehicles := mapVehicleLocationModelsToVehicles(vl)
 
-	// Stream each vehicle to the client
-	if err := stream.Send(&pb.NearVehicleResponse{Vehicle: vehicles}); err != nil {
-		return err
-	}
-
-	response := &pb.NearVehicleResponse{
-		Vehicle: vehicles,
-	}
-
-	if err := stream.Send(response); err != nil {
-		return err
+		// Stream each vehicle to the client
+		if err := stream.Send(&pb.NearVehicleResponse{Vehicle: vehicles}); err != nil {
+			return err
+		}
 	}
 
 	return nil
