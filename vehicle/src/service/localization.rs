@@ -8,12 +8,9 @@ use tonic::transport::Channel;
 use tonic::Request;
 
 use crate::data::database::VehicleDatabase;
-use crate::interfaces::grpc::common::Location;
 use crate::interfaces::grpc::localization::localization_client::LocalizationClient;
 use crate::interfaces::grpc::localization::VehicleLocationRequest;
 use crate::interfaces::{AckResponseRest, LocationRest, VehicleLocationRequestRest};
-
-
 
 
 pub async fn update_locations(database: &Arc<Mutex<VehicleDatabase>>) -> Vec<(String, f64, f64)> {
@@ -69,7 +66,7 @@ pub async fn send_location_via_grpc(database: &Arc<Mutex<VehicleDatabase>>, mut 
         let locations = update_locations(database).await;
         let locations: Vec<VehicleLocationRequest> = locations.iter().map(|loc| VehicleLocationRequest {
             vehicle_id: loc.0.to_owned(),
-            location: Some(Location {
+            location: Some(crate::interfaces::grpc::localization::Location {
                 latitude: loc.1.to_owned(),
                 longitude: loc.2.to_owned()
             }),

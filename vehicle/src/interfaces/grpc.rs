@@ -5,7 +5,6 @@ use tonic::{transport::Server, Request, Response, Status};
 
 use booking::vehicle_service_server::VehicleService;
 use booking::BookConfirmationRequest;
-use common::AckResponse;
 
 use crate::data::database::VehicleDatabase;
 use crate::interfaces::grpc::booking::vehicle_service_server::VehicleServiceServer;
@@ -17,18 +16,15 @@ pub mod booking {
 pub mod localization {
     tonic::include_proto!("localization");
 }
-pub mod common {
-    tonic::include_proto!("common");
-}
 
 #[tonic::async_trait]
 impl VehicleService for BookingServerImpl {
 
-    async fn book_confirmation(&self, request: Request<BookConfirmationRequest>) -> Result<Response<AckResponse>, Status> {
+    async fn book_confirmation(&self, request: Request<BookConfirmationRequest>) -> Result<Response<booking::AckResponse>, Status> {
         println!("[Booking Receiver] [gRPC] >>>>> Starting communication through gRPC stream.");
         let book_confirmation_request = request.get_ref();
         let (message, success) = self.book_vehicle(&book_confirmation_request.user_id, &book_confirmation_request.vehicle_id);
-        let response = AckResponse { message, success };
+        let response = booking::AckResponse { message, success };
         println!("[Booking Receiver] [gRPC] <<<<< Ending communication through gRPC stream.");
         Ok(Response::new(response))
     }

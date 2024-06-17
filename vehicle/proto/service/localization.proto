@@ -1,13 +1,24 @@
 syntax = "proto3";
 
 package localization;
-import "common/common.proto";
 
 service Localization {
-    rpc SendLocation (stream VehicleLocationRequest) returns (common.AckResponse) {}
+    rpc SendLocation (stream VehicleLocationRequest) returns (AckResponse) {}
 }
 
 message VehicleLocationRequest {
     string vehicle_id = 1;
-    common.Location location = 2;
+    Location location = 2;
+}
+
+// The response message containing the operation ack
+message AckResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Message containing location data: latitude and longitude
+message Location {
+  double latitude = 1;
+  double longitude = 2;
 }
