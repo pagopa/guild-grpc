@@ -5,10 +5,10 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-EXPOSE 50051
-RUN go build -o server
+EXPOSE 50052
+RUN go build -o exec_localization
 
 FROM scratch
-COPY --from=builder /app/server /server
-EXPOSE 50051
-ENTRYPOINT ["/server"]
+COPY --from=builder /app/exec_localization /exec_localization
+EXPOSE 50052
+ENTRYPOINT ["/exec_localization"]
