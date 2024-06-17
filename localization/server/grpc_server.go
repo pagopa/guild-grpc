@@ -18,7 +18,7 @@ var (
 )
 
 const (
-	MAX_STREAMING_GET_VEHICLE int = 10
+	MAX_STREAMING_PAGE_GET_VEHICLE int = 10
 )
 
 // server is used to implement localization.LocalizationServer.
@@ -64,8 +64,8 @@ func (s *server) GetNearVehicles(req *pb.UserLocationRequest, stream pb.Localiza
 	log.Printf("Received user location request: UserID %s, Latitude %f, Longitude %f\n",
 		req.UserId, req.Location.Latitude, req.Location.Longitude)
 
-	var size = 1
-	for page := 0; page < MAX_STREAMING_GET_VEHICLE; page++ {
+	var size = 10
+	for page := 0; page < MAX_STREAMING_PAGE_GET_VEHICLE; page++ {
 		var vl []data.VehicleLocationModel = data.QueryProximity(req.Location.Latitude, req.Location.Longitude, int64(page), int64(size))
 		vehicles := mapVehicleLocationModelsToVehicles(vl)
 
