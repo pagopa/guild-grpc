@@ -43,7 +43,9 @@ func StartGINServer() error {
 func getNearVehicles(c *gin.Context) {
 	var latitude, _ = strconv.ParseFloat(c.DefaultQuery("latitude", "45.97"), 64)
 	var longitude, _ = strconv.ParseFloat(c.DefaultQuery("longitude", "12.22"), 64)
-	var vl []data.VehicleLocationModel = data.QueryProximity(latitude, longitude)
+	var page, _ = strconv.Atoi(c.DefaultQuery("page", "0"))
+	var size, _ = strconv.Atoi(c.DefaultQuery("size", "1"))
+	var vl []data.VehicleLocationModel = data.QueryProximity(latitude, longitude, int64(page), int64(size))
 	if vl == nil {
 		c.IndentedJSON(http.StatusOK, "No nearby vehicles within the defined radius")
 	} else {
