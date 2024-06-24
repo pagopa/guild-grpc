@@ -56,12 +56,12 @@ services:
       - "50051:50051"
       - "8080:8080"
     environment:
-      CAR_FLEET_SIZE: 500
+      CAR_FLEET_SIZE: 1000
       BICYCLE_FLEET_SIZE: 1
       MOTORCYCLE_FLEET_SIZE: 1
       LOCALIZATION_SERVER_GRPC_URL: http://localization-service:50052
       BOOKING_SERVICE_EXPOSED_PORT: 50051
-      LOCALIZATION_PING_INTERVAL: 1
+      LOCALIZATION_PING_INTERVAL: 200
       FUEL_CONSUME_PER_TURN: 2.0
     networks: 
       - guild_grpc_network
