@@ -34,9 +34,10 @@ services:
       - "9090:9090"
     depends_on:
       - guild_grpc_mongo
+      - guild_grpc_vehicle_service
     environment:
       - SPRING_DATA_MONGODB_host=mongo-db
-      - GRPC_CLIENT_VEHICLE_ADDRESS=vehicle-service:50051
+      - GRPC_CLIENT_VEHICLE_ADDRESS=static://vehicle-service:50051
       - REST_SERVICE_VEHICLE_URL=http://vehicle-service:8080
     networks: 
       - guild_grpc_network
