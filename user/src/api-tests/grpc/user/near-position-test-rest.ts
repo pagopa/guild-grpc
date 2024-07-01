@@ -64,8 +64,8 @@ export default function () {
   const bookingRequest = {
     vehicle_id: vehicle.id,
     location: {
-      latitude: vehicle.location.latitude,
-      longitude: vehicle.location.longitude
+      latitude: vehicle.location.Coordinates[0],
+      longitude: vehicle.location.Coordinates[1]
     },
     user_id: userId
   };
