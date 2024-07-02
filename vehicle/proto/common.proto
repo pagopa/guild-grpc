@@ -1,15 +1,6 @@
 syntax = "proto3";
 
-package localization;
-
-service Localization {
-    rpc SendLocation (stream VehicleLocationRequest) returns (AckResponse) {}
-}
-
-message VehicleLocationRequest {
-    string vehicle_id = 1;
-    Location location = 2;
-}
+package it.pagopa.guild.grpc.booking;
 
 // The response message containing the operation ack
 message AckResponse {
