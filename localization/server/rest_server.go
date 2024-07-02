@@ -33,7 +33,7 @@ func StartGINServer() error {
 	router.GET("/vehicles", getNearVehicles)
 	router.POST("/vehicles", postVehicle)
 
-	router.Run(fmt.Sprintf("localhost:%d", *gin_port))
+	router.Run(fmt.Sprintf("[::]:%d", *gin_port))
 	log.Printf("GIN Server listening at %d", *gin_port)
 
 	return nil
@@ -44,7 +44,7 @@ func getNearVehicles(c *gin.Context) {
 	var latitude, _ = strconv.ParseFloat(c.DefaultQuery("latitude", "45.97"), 64)
 	var longitude, _ = strconv.ParseFloat(c.DefaultQuery("longitude", "12.22"), 64)
 	var page, _ = strconv.Atoi(c.DefaultQuery("page", "0"))
-	var size, _ = strconv.Atoi(c.DefaultQuery("size", "1"))
+	var size, _ = strconv.Atoi(c.DefaultQuery("size", "10"))
 	var vl []data.VehicleLocationModel = data.QueryProximity(latitude, longitude, int64(page), int64(size))
 	if vl == nil {
 		c.IndentedJSON(http.StatusOK, "No nearby vehicles within the defined radius")
