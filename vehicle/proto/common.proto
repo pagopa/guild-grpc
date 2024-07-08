@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package common;
+package it.pagopa.guild.grpc.booking;
 
 // The response message containing the operation ack
 message AckResponse {
